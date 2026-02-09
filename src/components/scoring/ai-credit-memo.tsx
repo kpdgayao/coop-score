@@ -17,7 +17,12 @@ interface CreditMemoProps {
 }
 
 export function AICreditMemo({ recommendations }: CreditMemoProps) {
-  if (!recommendations) {
+  // Validate shape — seed data may have a different structure (e.g. { items: [] })
+  if (
+    !recommendations ||
+    typeof recommendations.recommendation !== "string" ||
+    !Array.isArray(recommendations.strengths)
+  ) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex items-center justify-center py-8 text-muted-foreground">
@@ -92,7 +97,7 @@ export function AICreditMemo({ recommendations }: CreditMemoProps) {
         </div>
 
         {/* Conditions */}
-        {r.conditions.length > 0 && (
+        {r.conditions?.length > 0 && (
           <div className="p-3 bg-amber-50 rounded-lg space-y-1">
             <h4 className="text-sm font-medium text-amber-800">Conditions</h4>
             <ul className="space-y-0.5">
@@ -104,7 +109,7 @@ export function AICreditMemo({ recommendations }: CreditMemoProps) {
         )}
 
         {/* Improvement Tips */}
-        {r.improvement_tips.length > 0 && (
+        {r.improvement_tips?.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-sm font-medium flex items-center gap-1.5">
               <Lightbulb className="h-4 w-4 text-teal" />
@@ -121,12 +126,14 @@ export function AICreditMemo({ recommendations }: CreditMemoProps) {
         )}
 
         {/* Suggested Amount */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <span className="text-sm text-muted-foreground">Suggested Max Loan Amount</span>
-          <span className="font-semibold text-primary">
-            {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(r.suggested_max_amount)}
-          </span>
-        </div>
+        {r.suggested_max_amount != null && (
+          <div className="flex items-center justify-between pt-2 border-t">
+            <span className="text-sm text-muted-foreground">Suggested Max Loan Amount</span>
+            <span className="font-semibold text-primary">
+              {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(r.suggested_max_amount)}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
