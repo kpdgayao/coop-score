@@ -105,23 +105,25 @@ export default async function ScoringPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
             Credit Scoring Engine
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Cooperative-context credit intelligence powered by AI
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="gap-2" size="sm">
             <UserCheck className="h-4 w-4" />
-            Score Individual Member
+            <span className="hidden sm:inline">Score Individual</span>
+            <span className="sm:hidden">Score</span>
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2" size="sm">
             <Play className="h-4 w-4" />
-            Run Batch Scoring
+            <span className="hidden sm:inline">Run Batch Scoring</span>
+            <span className="sm:hidden">Batch</span>
           </Button>
         </div>
       </div>
@@ -129,7 +131,7 @@ export default async function ScoringPage() {
       {/* Score Distribution */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Score Distribution</h2>
-        <div className="grid gap-4 md:grid-cols-5">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
           {distribution.map((cat) => (
             <Card key={cat.key} className={`border ${cat.bgColor}`}>
               <CardContent className="pt-6">

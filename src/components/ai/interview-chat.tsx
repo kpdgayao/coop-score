@@ -129,7 +129,7 @@ export function InterviewChat({
   };
 
   return (
-    <Card className="flex flex-col h-[600px]">
+    <Card className="flex flex-col h-[calc(100vh-10rem)] max-h-[600px] min-h-[400px]">
       <CardHeader className="pb-3 border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -150,7 +150,7 @@ export function InterviewChat({
                 key={topic.id}
                 variant="outline"
                 className={cn(
-                  "text-[10px]",
+                  "text-[11px]",
                   topicsCovered.includes(topic.id)
                     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                     : "text-muted-foreground"

@@ -53,8 +53,8 @@ export default function ReportsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Reports</h1>
+        <p className="text-sm text-muted-foreground">
           Generate analytical reports for credit operations and portfolio monitoring
         </p>
       </div>

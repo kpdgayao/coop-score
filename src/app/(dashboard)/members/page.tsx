@@ -80,7 +80,7 @@ export default async function MembersPage({
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Members</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Members</h1>
         <p className="text-muted-foreground">
           Manage cooperative members
         </p>

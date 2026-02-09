@@ -72,8 +72,8 @@ export default function SettingsPage() {
     <div className="space-y-8">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">
           Configure the credit scoring model parameters and thresholds
         </p>
       </div>
@@ -107,7 +107,7 @@ export default function SettingsPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
+                        <div className="h-2 w-16 sm:w-24 bg-muted rounded-full overflow-hidden">
                           <div
                             className="h-full bg-primary rounded-full"
                             style={{ width: `${(standardWeight / 30) * 100}%` }}
@@ -120,7 +120,7 @@ export default function SettingsPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
+                        <div className="h-2 w-16 sm:w-24 bg-muted rounded-full overflow-hidden">
                           <div
                             className="h-full bg-teal-500 rounded-full"
                             style={{ width: `${(thinFileWeight / 30) * 100}%` }}

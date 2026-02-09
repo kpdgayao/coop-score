@@ -131,7 +131,7 @@ export function WhatIfSimulator({
           <div className="space-y-2">
             {actions.map((action) => (
               <div key={action.id} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                <span className="text-sm flex-1">{action.label}</span>
+                <span className="text-sm flex-1 min-w-0">{action.label}</span>
                 <Input
                   value={action.value}
                   onChange={(e) =>
@@ -141,10 +141,10 @@ export function WhatIfSimulator({
                       )
                     )
                   }
-                  className="w-20 h-8 text-sm"
+                  className="w-20 h-10 text-sm shrink-0"
                 />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeAction(action.id)}>
-                  <Trash2 className="h-3 w-3" />
+                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => removeAction(action.id)}>
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             ))}
@@ -179,13 +179,13 @@ export function WhatIfSimulator({
               <Label className="text-sm font-medium">Priority Actions</Label>
               {coaching.priority_actions.map((pa, i) => (
                 <div key={i} className="p-3 bg-muted/50 rounded-lg space-y-1">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <span className="text-sm font-medium">{pa.action}</span>
-                    <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-800">
+                    <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-800 shrink-0">
                       {pa.projected_impact}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {pa.timeline}

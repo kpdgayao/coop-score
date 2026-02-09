@@ -127,10 +127,10 @@ export default function NewLoanPage() {
 
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
           New Loan Application
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Submit a new loan application for a cooperative member
         </p>
       </div>
@@ -167,10 +167,10 @@ export default function NewLoanPage() {
                       key={m.id}
                       type="button"
                       onClick={() => selectMember(m)}
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex justify-between items-center"
+                      className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted/50 flex justify-between items-center gap-2 min-h-[44px]"
                     >
-                      <span className="font-medium">{m.lastName}, {m.firstName}</span>
-                      <span className="text-muted-foreground font-mono text-xs">{m.membershipNumber}</span>
+                      <span className="font-medium truncate">{m.lastName}, {m.firstName}</span>
+                      <span className="text-muted-foreground font-mono text-xs shrink-0">{m.membershipNumber}</span>
                     </button>
                   ))}
                 </div>
@@ -267,7 +267,7 @@ export default function NewLoanPage() {
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-3 pt-4">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-4">
               <Button type="submit" disabled={submitting || !selectedMember}>
                 {submitting ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

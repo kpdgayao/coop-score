@@ -36,14 +36,14 @@ export function NarrativeAssessment({ assessment }: NarrativeAssessmentProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Brain className="h-5 w-5 text-teal" />
+            <Brain className="h-5 w-5 text-teal shrink-0" />
             AI Narrative Assessment
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">{a.purpose_category}</Badge>
-            <Badge className={riskColor}>{a.risk_level.toUpperCase()} RISK</Badge>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="outline" className="text-xs">{a.purpose_category}</Badge>
+            <Badge className={`text-xs ${riskColor}`}>{a.risk_level.toUpperCase()} RISK</Badge>
           </div>
         </div>
       </CardHeader>

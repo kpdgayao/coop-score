@@ -158,7 +158,7 @@ export default async function LoanDetailPage({
                   {loan.status.charAt(0) + loan.status.slice(1).toLowerCase()}
                 </Badge>
               </div>
-              <div className="text-3xl font-bold">
+              <div className="text-2xl sm:text-3xl font-bold">
                 {formatCurrency(loan.principalAmount.toString())}
               </div>
               <p className="text-sm text-muted-foreground mt-1">

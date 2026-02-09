@@ -1,6 +1,8 @@
 "use client";
 
-import { Bell, Search, User } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
+import { Bell, Menu, Search, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,12 +14,43 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { SidebarNav } from "@/components/layout/sidebar";
 
 export function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card px-6">
-      {/* Search */}
-      <div className="relative flex-1 max-w-md">
+    <header className="sticky top-0 z-30 flex h-14 lg:h-16 items-center gap-2 sm:gap-4 border-b bg-card px-3 sm:px-6">
+      {/* Mobile menu button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="lg:hidden shrink-0"
+        onClick={() => setMobileMenuOpen(true)}
+      >
+        <Menu className="h-5 w-5" />
+        <span className="sr-only">Open menu</span>
+      </Button>
+
+      {/* Mobile sidebar drawer */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground">
+          <SheetHeader className="h-16 flex-row items-center gap-2 px-4 border-b border-sidebar-border space-y-0">
+            <Shield className="h-7 w-7 text-sidebar-primary" />
+            <SheetTitle className="text-sidebar-foreground">CoopScore</SheetTitle>
+          </SheetHeader>
+          <SidebarNav onNavigate={() => setMobileMenuOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Search - hidden on very small screens */}
+      <div className="relative flex-1 max-w-md hidden sm:block">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search members, loans..."
@@ -25,7 +58,10 @@ export function Header() {
         />
       </div>
 
-      <div className="flex items-center gap-3 ml-auto">
+      {/* Spacer for mobile */}
+      <div className="flex-1 sm:hidden" />
+
+      <div className="flex items-center gap-2 sm:gap-3 ml-auto">
         {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5 text-muted-foreground" />
