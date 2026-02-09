@@ -188,7 +188,7 @@ export default async function LoanDetailPage({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <p className="text-sm text-muted-foreground">Purpose</p>
-              <p className="font-medium mt-1">{loan.purpose}</p>
+              <p className="font-medium mt-1 break-words line-clamp-3">{loan.purpose}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Interest Rate</p>

@@ -146,12 +146,12 @@ export function InterviewChat({
   return (
     <Card className="flex flex-col h-[calc(100vh-10rem)] max-h-[700px] min-h-[400px]">
       <CardHeader className="pb-3 border-b">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <MessageCircle className="h-5 w-5 text-brand" />
-            Loan Interview — {memberName}
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-base min-w-0">
+            <MessageCircle className="h-5 w-5 text-brand shrink-0" />
+            <span className="truncate">Loan Interview — {memberName}</span>
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             {started && (
               <Badge
                 variant="outline"

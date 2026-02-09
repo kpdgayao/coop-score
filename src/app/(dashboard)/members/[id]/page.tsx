@@ -150,7 +150,7 @@ export default async function MemberProfilePage({
                 <User className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold">
+                <h1 className="text-xl sm:text-2xl font-bold break-words">
                   {member.firstName} {member.middleName ?? ""} {member.lastName}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">

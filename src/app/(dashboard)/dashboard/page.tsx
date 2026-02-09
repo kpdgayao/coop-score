@@ -252,14 +252,11 @@ export default async function DashboardPage() {
                     >
                       {alert.member.lastName}, {alert.member.firstName}
                     </Link>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground line-clamp-2">
                       <span className="font-medium">
                         {alert.alertType.replace(/_/g, " ")}
                       </span>{" "}
-                      &mdash;{" "}
-                      {alert.description.length > 80
-                        ? alert.description.slice(0, 80) + "..."
-                        : alert.description}
+                      &mdash; {alert.description}
                     </p>
                   </div>
                 ))}
