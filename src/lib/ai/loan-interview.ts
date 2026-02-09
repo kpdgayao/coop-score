@@ -473,6 +473,22 @@ export async function continueInterview(
 }
 
 /**
+ * Manually completes an in-progress interview.
+ * Marks it as COMPLETED so an assessment can be generated.
+ */
+export async function completeInterview(
+  interviewId: string
+): Promise<void> {
+  await prisma.loanInterview.update({
+    where: { id: interviewId },
+    data: {
+      status: "COMPLETED",
+      completedAt: new Date(),
+    },
+  });
+}
+
+/**
  * Generates a structured assessment from the completed interview transcript.
  * Returns null on AI failure (graceful degradation).
  */

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   startInterview,
   continueInterview,
+  completeInterview,
   assessInterview,
 } from "@/lib/ai/loan-interview";
 
@@ -47,6 +48,18 @@ export async function POST(request: NextRequest) {
         }
         const result = await continueInterview(interviewId, message);
         return NextResponse.json(result);
+      }
+
+      case "complete": {
+        const { interviewId: completeId } = body;
+        if (!completeId) {
+          return NextResponse.json(
+            { error: "interviewId is required" },
+            { status: 400 }
+          );
+        }
+        await completeInterview(completeId);
+        return NextResponse.json({ success: true });
       }
 
       case "assess": {

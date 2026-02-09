@@ -5,13 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Send, CheckCircle, Loader2, Globe } from "lucide-react";
+import {
+  MessageCircle, Send, CheckCircle, Loader2, Globe,
+  Square, ClipboardCheck, AlertTriangle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatMessage {
   role: "assistant" | "user";
   content: string;
   timestamp: Date;
+}
+
+interface InterviewAssessment {
+  overall_score: number;
+  financial_literacy_score: number;
+  business_viability_score: number;
+  coherence_score: number;
+  risk_flags: string[];
+  summary: string;
+  recommendation: string;
 }
 
 interface InterviewChatProps {
@@ -51,13 +64,17 @@ export function InterviewChat({
   const [isComplete, setIsComplete] = useState(false);
   const [started, setStarted] = useState(false);
   const [language, setLanguage] = useState<InterviewLanguage>("english");
+  const [completing, setCompleting] = useState(false);
+  const [assessing, setAssessing] = useState(false);
+  const [assessment, setAssessment] = useState<InterviewAssessment | null>(null);
+  const [assessError, setAssessError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, assessment]);
 
   const startInterview = async () => {
     setLoading(true);
@@ -140,7 +157,47 @@ export function InterviewChat({
     setLoading(false);
   };
 
+  const endInterview = async () => {
+    if (!interviewId) return;
+    setCompleting(true);
+    try {
+      const res = await fetch("/api/ai/loan-interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interviewId, action: "complete" }),
+      });
+      if (res.ok) {
+        setIsComplete(true);
+      }
+    } catch {
+      // ignore
+    }
+    setCompleting(false);
+  };
+
+  const generateAssessment = async () => {
+    if (!interviewId) return;
+    setAssessing(true);
+    setAssessError(null);
+    try {
+      const res = await fetch("/api/ai/loan-interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interviewId, action: "assess" }),
+      });
+      if (!res.ok) throw new Error("Assessment failed");
+      const data = await res.json();
+      setAssessment(data);
+    } catch {
+      setAssessError("Failed to generate assessment. Please try again.");
+    }
+    setAssessing(false);
+  };
+
   const selectedLang = LANGUAGE_OPTIONS.find((l) => l.value === language)!;
+
+  // Show end button after at least 3 exchanges (6 messages)
+  const canEnd = started && !isComplete && !loading && messages.length >= 4;
 
   return (
     <Card className="flex flex-col h-[calc(100vh-10rem)] max-h-[700px] min-h-[400px]">
@@ -284,38 +341,131 @@ export function InterviewChat({
                   </div>
                 </div>
               )}
+
+              {/* Assessment Results */}
+              {assessment && (
+                <div className="border rounded-lg p-4 bg-muted/30 space-y-3 mt-2">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <ClipboardCheck className="h-4 w-4 text-brand" />
+                    Interview Assessment
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <ScoreBar label="Overall" score={assessment.overall_score} />
+                    <ScoreBar label="Financial Literacy" score={assessment.financial_literacy_score} />
+                    <ScoreBar label="Business Viability" score={assessment.business_viability_score} />
+                    <ScoreBar label="Coherence" score={assessment.coherence_score} />
+                  </div>
+                  <p className="text-sm">{assessment.summary}</p>
+                  <p className="text-sm font-medium">{assessment.recommendation}</p>
+                  {assessment.risk_flags.length > 0 && (
+                    <div className="space-y-1 p-2 bg-amber-50 rounded">
+                      {assessment.risk_flags.map((flag, i) => (
+                        <p key={i} className="text-xs text-amber-700 flex items-start gap-1.5">
+                          <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                          {flag}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Input */}
-        {started && !isComplete && (
-          <div className="p-4 border-t">
-            <div className="flex gap-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type the applicant's response..."
-                className="min-h-[44px] max-h-[120px] resize-none"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-              />
-              <Button
-                onClick={sendMessage}
-                disabled={loading || !input.trim()}
-                size="icon"
-                className="h-11 w-11 bg-brand hover:bg-brand-light text-white shrink-0"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
+        {/* Input / Actions */}
+        {started && (
+          <div className="p-3 border-t shrink-0">
+            {!isComplete ? (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Type the applicant's response..."
+                    className="min-h-[44px] max-h-[120px] resize-none"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={loading || !input.trim()}
+                    size="icon"
+                    className="h-11 w-11 bg-brand hover:bg-brand-light text-white shrink-0"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+                {canEnd && (
+                  <Button
+                    onClick={endInterview}
+                    disabled={completing}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-muted-foreground"
+                  >
+                    {completing ? (
+                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    ) : (
+                      <Square className="h-3.5 w-3.5 mr-1.5" />
+                    )}
+                    {completing ? "Ending..." : "End Interview"}
+                  </Button>
+                )}
+              </div>
+            ) : !assessment ? (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground text-center">
+                  Interview completed. Generate an AI assessment of the applicant.
+                </p>
+                {assessError && (
+                  <p className="text-xs text-red-600 text-center">{assessError}</p>
+                )}
+                <Button
+                  onClick={generateAssessment}
+                  disabled={assessing}
+                  className="w-full bg-brand hover:bg-brand-light text-white"
+                >
+                  {assessing ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <ClipboardCheck className="h-4 w-4 mr-2" />
+                  )}
+                  {assessing ? "Generating Assessment..." : "Generate Assessment"}
+                </Button>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">
+                Assessment complete. Score: {assessment.overall_score}/100
+              </p>
+            )}
           </div>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function ScoreBar({ label, score }: { label: string; score: number }) {
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-medium">{score}</span>
+      </div>
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${score}%`,
+            backgroundColor: score >= 70 ? "#059669" : score >= 40 ? "#f59e0b" : "#ef4444",
+          }}
+        />
+      </div>
+    </div>
   );
 }
