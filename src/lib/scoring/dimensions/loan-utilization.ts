@@ -156,20 +156,28 @@ export async function scoreLoanUtilization(
     earlyRepaymentDetails = "No completed loans to evaluate";
   } else {
     // Check if any loans were paid before maturity date
-    // We use the latest payment date on each loan to determine completion time
+    // Batch-fetch the latest payment for all paid loans to avoid N+1 queries
+    const paidLoanIds = paidLoans.map((l) => l.id);
+    const lastPayments = await prisma.loanPayment.findMany({
+      where: { loanId: { in: paidLoanIds } },
+      orderBy: { paymentDate: "desc" },
+      distinct: ["loanId"],
+      select: { loanId: true, paymentDate: true },
+    });
+
+    const lastPaymentMap = new Map(
+      lastPayments.map((p) => [p.loanId, p.paymentDate]),
+    );
+
     const earlyPaidLoans: typeof paidLoans = [];
     const lateLoans: typeof paidLoans = [];
 
     for (const loan of paidLoans) {
-      const lastPayment = await prisma.loanPayment.findFirst({
-        where: { loanId: loan.id },
-        orderBy: { paymentDate: "desc" },
-        select: { paymentDate: true },
-      });
+      const lastPaymentDate = lastPaymentMap.get(loan.id);
 
-      if (lastPayment?.paymentDate && lastPayment.paymentDate < loan.maturityDate) {
+      if (lastPaymentDate && lastPaymentDate < loan.maturityDate) {
         earlyPaidLoans.push(loan);
-      } else if (lastPayment?.paymentDate && lastPayment.paymentDate > loan.maturityDate) {
+      } else if (lastPaymentDate && lastPaymentDate > loan.maturityDate) {
         lateLoans.push(loan);
       }
     }

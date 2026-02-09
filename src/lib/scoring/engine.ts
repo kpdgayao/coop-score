@@ -22,9 +22,9 @@ const MODEL_VERSION = "1.0";
  */
 const DIMENSION_WEIGHT_KEYS: Record<string, keyof typeof STANDARD_WEIGHTS> = {
   "Repayment History": "repaymentHistory",
-  "Capital Build-up": "capitalBuildup",
-  "Cooperative Engagement": "cooperativeEngagement",
-  "Membership Maturity": "membershipMaturity",
+  "Capital Build-Up Behavior": "capitalBuildup",
+  "Cooperative Engagement & Social Capital": "cooperativeEngagement",
+  "Membership Maturity & Stability": "membershipMaturity",
   "Loan Utilization & Behavior": "loanUtilization",
   "Guarantor Network Quality": "guarantorNetwork",
   "Demographics & External Factors": "demographics",
