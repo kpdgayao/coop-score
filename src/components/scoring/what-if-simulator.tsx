@@ -6,18 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Plus, Trash2, Play } from "lucide-react";
+import { Sparkles, Plus, Trash2, Play, Loader2, Target, Clock, CheckCircle } from "lucide-react";
 
 interface SimulationAction {
   id: string;
   action: string;
   value: string;
+  label: string;
 }
 
-interface SimulationResult {
-  action: string;
-  projectedScoreChange: number;
-  newScore: number;
+interface CoachingResponse {
+  coaching_message: string;
+  priority_actions: Array<{
+    action: string;
+    projected_impact: string;
+    timeline: string;
+    feasibility: string;
+  }>;
+  next_milestone: {
+    target_tier: string;
+    current_score: number;
+    target_score: number;
+    actions_needed: string[];
+  };
 }
 
 interface WhatIfSimulatorProps {
@@ -41,13 +52,14 @@ export function WhatIfSimulator({
   riskCategory,
 }: WhatIfSimulatorProps) {
   const [actions, setActions] = useState<SimulationAction[]>([]);
-  const [results, setResults] = useState<SimulationResult[] | null>(null);
+  const [coaching, setCoaching] = useState<CoachingResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const addAction = (preset: typeof presetActions[0]) => {
     setActions([
       ...actions,
-      { id: Math.random().toString(36).slice(2), action: preset.label, value: preset.defaultValue },
+      { id: Math.random().toString(36).slice(2), action: preset.action, value: preset.defaultValue, label: preset.label },
     ]);
   };
 
@@ -57,13 +69,31 @@ export function WhatIfSimulator({
 
   const runSimulation = async () => {
     setLoading(true);
-    // Simulated results for now
-    const simResults: SimulationResult[] = actions.map((a) => ({
-      action: a.action,
-      projectedScoreChange: Math.floor(Math.random() * 30) + 5,
-      newScore: Math.min(850, currentScore + Math.floor(Math.random() * 30) + 5),
-    }));
-    setResults(simResults);
+    setError(null);
+    setCoaching(null);
+
+    // Build simulation results to pass to AI
+    const simulationResults = actions.map((a) => {
+      const estimatedChange = estimateScoreChange(a.action, a.value);
+      return {
+        action: a.label + (a.value !== "1" ? ` (${a.value})` : ""),
+        projectedScoreChange: estimatedChange,
+        newScore: Math.min(850, currentScore + estimatedChange),
+      };
+    });
+
+    try {
+      const res = await fetch("/api/ai/what-if-coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, simulationResults }),
+      });
+      if (!res.ok) throw new Error("AI coaching unavailable");
+      const result = await res.json();
+      setCoaching(result);
+    } catch {
+      setError("AI coaching unavailable. Check your API key.");
+    }
     setLoading(false);
   };
 
@@ -77,7 +107,7 @@ export function WhatIfSimulator({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Simulate how different actions could affect this member&apos;s credit score.
+          Select actions to simulate and get AI-powered coaching on how to improve this member&apos;s credit score.
         </p>
 
         {/* Preset actions */}
@@ -101,7 +131,7 @@ export function WhatIfSimulator({
           <div className="space-y-2">
             {actions.map((action) => (
               <div key={action.id} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                <span className="text-sm flex-1">{action.action}</span>
+                <span className="text-sm flex-1">{action.label}</span>
                 <Input
                   value={action.value}
                   onChange={(e) =>
@@ -120,27 +150,95 @@ export function WhatIfSimulator({
             ))}
 
             <Button onClick={runSimulation} disabled={loading} className="w-full bg-teal hover:bg-teal-light text-white">
-              <Play className="h-4 w-4 mr-2" />
-              {loading ? "Simulating..." : "Run Simulation"}
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Play className="h-4 w-4 mr-2" />
+              )}
+              {loading ? "Getting AI Coaching..." : "Run Simulation & Get AI Coaching"}
             </Button>
           </div>
         )}
 
-        {/* Results */}
-        {results && (
-          <div className="space-y-2 pt-2 border-t">
-            <Label className="text-sm font-medium">Projected Results</Label>
-            {results.map((r, i) => (
-              <div key={i} className="flex items-center justify-between p-2 bg-emerald-50 rounded-lg">
-                <span className="text-sm">{r.action}</span>
-                <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
-                  +{r.projectedScoreChange} pts → {r.newScore}
-                </Badge>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        {/* AI Coaching Results */}
+        {coaching && (
+          <div className="space-y-4 pt-4 border-t">
+            {/* Coaching Message */}
+            <div className="p-4 bg-teal/5 rounded-lg border border-teal/20">
+              <h4 className="text-sm font-medium flex items-center gap-1.5 mb-2 text-teal">
+                <Sparkles className="h-4 w-4" />
+                AI Coach Says
+              </h4>
+              <p className="text-sm leading-relaxed">{coaching.coaching_message}</p>
+            </div>
+
+            {/* Priority Actions */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Priority Actions</Label>
+              {coaching.priority_actions.map((pa, i) => (
+                <div key={i} className="p-3 bg-muted/50 rounded-lg space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{pa.action}</span>
+                    <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-800">
+                      {pa.projected_impact}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {pa.timeline}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      {pa.feasibility}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Next Milestone */}
+            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <h4 className="text-sm font-medium flex items-center gap-1.5 mb-2">
+                <Target className="h-4 w-4 text-primary" />
+                Next Milestone: {coaching.next_milestone.target_tier}
+              </h4>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl font-bold">{coaching.next_milestone.current_score}</span>
+                <span className="text-muted-foreground">→</span>
+                <span className="text-2xl font-bold text-primary">{coaching.next_milestone.target_score}</span>
               </div>
-            ))}
+              <ul className="space-y-1">
+                {coaching.next_milestone.actions_needed.map((a, i) => (
+                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-1.5">
+                    <CheckCircle className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
       </CardContent>
     </Card>
   );
+}
+
+/**
+ * Rough heuristic for estimated score change per action type.
+ * Used to provide simulation results to the AI coach.
+ */
+function estimateScoreChange(action: string, value: string): number {
+  const v = parseInt(value) || 1;
+  switch (action) {
+    case "attend_trainings": return Math.min(v * 8, 25);
+    case "increase_cbu": return Math.min(Math.floor(parseInt(value) / 1000) * 5, 30);
+    case "join_committee": return 15;
+    case "attend_ga": return 10;
+    case "use_services": return Math.min(v * 3, 20);
+    case "refer_member": return Math.min(v * 5, 15);
+    default: return 10;
+  }
 }

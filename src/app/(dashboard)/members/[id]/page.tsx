@@ -1,17 +1,13 @@
 import { prisma } from "@/lib/db";
 import {
   formatCurrency,
-  formatDate,
   formatShortDate,
-  getRiskBgColor,
-  getRiskLabel,
 } from "@/lib/format";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
-  CardDescription,
 } from "@/components/ui/card";
 import {
   Table,
@@ -22,7 +18,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ScoreGauge } from "@/components/scoring/score-gauge";
 import {
   User,
   Phone,
@@ -36,6 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MemberAIActions } from "@/components/scoring/member-ai-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -125,7 +121,7 @@ export default async function MemberProfilePage({
     notFound();
   }
 
-  const latestScore = member.creditScores[0];
+  const latestScore = member.creditScores[0] ?? null;
   const dimensionScores = latestScore
     ? (latestScore.dimensionScores as unknown as DimensionScoreData[])
     : [];
@@ -214,79 +210,40 @@ export default async function MemberProfilePage({
         </CardContent>
       </Card>
 
-      {/* Credit Score Section */}
+      {/* Credit Score & AI Section */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Credit Score</h2>
-        {latestScore ? (
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Score</CardTitle>
-                <CardDescription>
-                  Computed on {formatDate(latestScore.scoreDate)} via{" "}
-                  {latestScore.scoringPathway === "THIN_FILE"
-                    ? "Thin File"
-                    : "Standard"}{" "}
-                  pathway
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex justify-center">
-                <ScoreGauge
-                  score={latestScore.totalScore}
-                  riskCategory={latestScore.riskCategory}
-                  size="lg"
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Dimension Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Array.isArray(dimensionScores) && dimensionScores.length > 0 ? (
-                  <div className="space-y-3">
-                    {dimensionScores.map((dim) => (
-                      <div key={dim.dimension}>
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="capitalize">
-                            {dim.dimension
-                              .replace(/([A-Z])/g, " $1")
-                              .trim()}
-                          </span>
-                          <span className="font-medium">
-                            {dim.score.toFixed(0)} / 100{" "}
-                            <span className="text-muted-foreground">
-                              ({dim.weight}%)
-                            </span>
-                          </span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full transition-all"
-                            style={{ width: `${dim.score}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No dimension breakdown available.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="py-8 text-center">
-              <p className="text-muted-foreground">
-                No credit score has been computed for this member yet.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <h2 className="text-xl font-semibold mb-4">Credit Score & AI Analysis</h2>
+        <MemberAIActions
+          memberId={member.id}
+          memberName={`${member.firstName} ${member.lastName}`}
+          latestScore={
+            latestScore
+              ? {
+                  id: latestScore.id,
+                  totalScore: latestScore.totalScore,
+                  riskCategory: latestScore.riskCategory,
+                  scoringPathway: latestScore.scoringPathway,
+                  scoreDate: latestScore.scoreDate.toISOString(),
+                  dimensionScores: Array.isArray(dimensionScores) ? dimensionScores : [],
+                  recommendations: latestScore.recommendations as {
+                    narrative: string;
+                    strengths: string[];
+                    concerns: string[];
+                    recommendation: string;
+                    suggested_max_amount: number;
+                    conditions: string[];
+                    improvement_tips: string[];
+                  } | null,
+                }
+              : null
+          }
+          scoreHistory={member.creditScores.map((s) => ({
+            id: s.id,
+            totalScore: s.totalScore,
+            riskCategory: s.riskCategory,
+            scoreDate: s.scoreDate.toISOString(),
+          }))}
+        />
       </div>
 
       {/* Loan History Section */}

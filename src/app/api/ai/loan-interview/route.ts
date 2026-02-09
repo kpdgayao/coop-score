@@ -20,8 +20,20 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-        // Use a default conductedBy ID for now
-        const result = await startInterview(loanId, body.conductedById || "system");
+        // Get a valid user ID if none provided
+        let conductedById = body.conductedById;
+        if (!conductedById) {
+          const { prisma } = await import("@/lib/db");
+          const defaultUser = await prisma.user.findFirst({ select: { id: true } });
+          conductedById = defaultUser?.id;
+          if (!conductedById) {
+            return NextResponse.json(
+              { error: "No users found in system" },
+              { status: 500 }
+            );
+          }
+        }
+        const result = await startInterview(loanId, conductedById);
         return NextResponse.json(result);
       }
 

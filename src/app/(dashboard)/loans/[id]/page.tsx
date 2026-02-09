@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { LoanAIActions } from "@/components/ai/loan-ai-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -64,11 +65,13 @@ function getPaymentStatusColor(status: string): string {
   }
 }
 
-interface NarrativeAssessment {
-  summary?: string;
-  recommendation?: string;
-  riskFactors?: string[];
-  strengths?: string[];
+interface NarrativeAssessmentData {
+  score: number;
+  risk_level: string;
+  flags: string[];
+  reasoning: string;
+  purpose_category: string;
+  alignment_with_profile: string;
 }
 
 export default async function LoanDetailPage({
@@ -119,7 +122,10 @@ export default async function LoanDetailPage({
     notFound();
   }
 
-  const narrative = loan.narrativeAssessment as NarrativeAssessment | null;
+  const narrative = loan.narrativeAssessment as NarrativeAssessmentData | null;
+
+  // Get a valid user ID for conducting interviews
+  const firstUser = await prisma.user.findFirst({ select: { id: true } });
 
   return (
     <div className="space-y-6">
@@ -226,62 +232,14 @@ export default async function LoanDetailPage({
         </CardContent>
       </Card>
 
-      {/* Narrative Assessment */}
-      {narrative && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CardTitle>Narrative Assessment</CardTitle>
-              <Badge variant="secondary" className="bg-violet-100 text-violet-800 gap-1">
-                <Sparkles className="h-3 w-3" />
-                AI Generated
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {narrative.summary && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Summary
-                </p>
-                <p className="text-sm">{narrative.summary}</p>
-              </div>
-            )}
-            {narrative.recommendation && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Recommendation
-                </p>
-                <p className="text-sm">{narrative.recommendation}</p>
-              </div>
-            )}
-            {narrative.strengths && narrative.strengths.length > 0 && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Strengths
-                </p>
-                <ul className="list-disc list-inside text-sm space-y-1">
-                  {narrative.strengths.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {narrative.riskFactors && narrative.riskFactors.length > 0 && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Risk Factors
-                </p>
-                <ul className="list-disc list-inside text-sm space-y-1">
-                  {narrative.riskFactors.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* AI Features: Narrative Analysis & Loan Interview */}
+      <LoanAIActions
+        loanId={loan.id}
+        memberId={loan.member.id}
+        memberName={`${loan.member.firstName} ${loan.member.lastName}`}
+        existingNarrative={narrative}
+        conductedById={firstUser?.id ?? ""}
+      />
 
       {/* Payment Schedule */}
       <Card>
