@@ -62,18 +62,24 @@ export function ScoreGauge({
   };
 
   const dim = dimensions[size];
-  const cx = dim.width / 2;
-  const cy = dim.height - 18;
-  // Reserve space for the needle dot (radius = strokeWidth*0.6 + stroke border)
-  // which extends beyond the arc path further than the stroke half-width
-  const dotPadding = Math.ceil(strokeWidth * 0.6) + 1;
-  const r = cx - dotPadding - strokeWidth / 2;
+  // Needle dot dimensions
+  const dotRadius = strokeWidth * 0.6;
+  const dotBorder = 2;
+  // Pad the viewBox to contain the needle dot at any arc position
+  const pad = Math.ceil(dotRadius + dotBorder);
+
+  // Drawing coordinates use the padded coordinate space
+  const cx = dim.width / 2 + pad;
+  const cy = dim.height - 18 + pad;
+  const r = dim.width / 2 - strokeWidth / 2;
 
   const leftX = cx - r;
   const rightX = cx + r;
 
-  // Background track with colored segments
-  const bgArc = `M ${leftX} ${cy} A ${r} ${r} 0 0 1 ${rightX} ${cy}`;
+  // Padded viewBox: content draws in a larger coordinate space,
+  // mapped to the same display size — prevents any overflow
+  const vbW = dim.width + pad * 2;
+  const vbH = dim.height + pad * 2;
 
   // Segment boundaries (normalized: 0=300, 1=850)
   const segments = [
@@ -123,8 +129,8 @@ export function ScoreGauge({
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={dim.width} height={dim.height} viewBox={`0 0 ${dim.width} ${dim.height}`}>
-        {/* Background colored segments */}
+      <svg width={dim.width} height={dim.height} viewBox={`0 0 ${vbW} ${vbH}`}>
+        {/* Background colored segments — butt caps to avoid tangent overflow */}
         {segmentArcs.map((seg, i) => (
           <path
             key={i}
@@ -132,29 +138,37 @@ export function ScoreGauge({
             fill="none"
             stroke={seg.color}
             strokeWidth={strokeWidth}
-            strokeLinecap={i === 0 || i === segmentArcs.length - 1 ? "round" : "butt"}
+            strokeLinecap="butt"
             opacity={0.15}
           />
         ))}
-        {/* Score arc */}
+        {/* Round caps for background track endpoints (circles, not linecaps) */}
+        <circle cx={leftX} cy={cy} r={strokeWidth / 2} fill={segments[0].color} opacity={0.15} />
+        <circle cx={rightX} cy={cy} r={strokeWidth / 2} fill={segments[segments.length - 1].color} opacity={0.15} />
+
+        {/* Score arc — butt cap, no tangent-dependent overflow */}
         {scoreArc && (
           <path
             d={scoreArc}
             fill="none"
             stroke={getGaugeColor()}
             strokeWidth={strokeWidth}
-            strokeLinecap="round"
+            strokeLinecap="butt"
           />
         )}
-        {/* Needle dot */}
+        {/* Round start cap for score arc */}
+        {animatedNormalized > 0.005 && (
+          <circle cx={leftX} cy={cy} r={strokeWidth / 2} fill={getGaugeColor()} />
+        )}
+        {/* Needle dot at score endpoint */}
         {animatedNormalized > 0.005 && (
           <circle
             cx={scoreX}
             cy={scoreY}
-            r={strokeWidth * 0.6}
+            r={dotRadius}
             fill={getGaugeColor()}
             stroke="white"
-            strokeWidth={2}
+            strokeWidth={dotBorder}
           />
         )}
         {/* Score text */}
