@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Plus, Trash2, Play, Loader2, Target, Clock, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { AILoadingIndicator } from "@/components/ai/ai-loading-indicator";
 
 interface SimulationAction {
   id: string;
@@ -163,6 +164,9 @@ export function WhatIfSimulator({
           </div>
         )}
 
+        {loading && (
+          <AILoadingIndicator message="Getting AI coaching recommendations..." />
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {/* AI Coaching Results */}

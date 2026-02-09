@@ -88,6 +88,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -101,7 +102,7 @@ export default function SettingsPage() {
                 const thinFileWeight =
                   thinFileEntries.find(([k]) => k === key)?.[1] ?? 0;
                 return (
-                  <TableRow key={key}>
+                  <TableRow key={key} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">
                       {DIMENSION_LABELS[key] ?? key}
                     </TableCell>
@@ -134,7 +135,7 @@ export default function SettingsPage() {
                   </TableRow>
                 );
               })}
-              <TableRow>
+              <TableRow className="hover:bg-muted/50 transition-colors">
                 <TableCell className="font-bold">Total</TableCell>
                 <TableCell className="text-center font-bold font-mono">
                   {standardEntries.reduce((sum, [, w]) => sum + w, 0)}%
@@ -145,6 +146,7 @@ export default function SettingsPage() {
               </TableRow>
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -157,6 +159,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -167,7 +170,7 @@ export default function SettingsPage() {
             </TableHeader>
             <TableBody>
               {SCORE_RANGES.map((range) => (
-                <TableRow key={range.category}>
+                <TableRow key={range.category} className="hover:bg-muted/50 transition-colors">
                   <TableCell className="font-mono font-medium">
                     {range.range}
                   </TableCell>
@@ -183,6 +186,7 @@ export default function SettingsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -196,6 +200,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -207,7 +212,7 @@ export default function SettingsPage() {
             </TableHeader>
             <TableBody>
               {PROGRESSIVE_LADDER.map((stage) => (
-                <TableRow key={stage.stage}>
+                <TableRow key={stage.stage} className="hover:bg-muted/50 transition-colors">
                   <TableCell>
                     <Badge variant="secondary" className="font-medium">
                       {stage.stage}
@@ -239,6 +244,7 @@ export default function SettingsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

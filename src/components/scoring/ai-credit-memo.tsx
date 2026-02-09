@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, ThumbsUp, AlertTriangle, Lightbulb, CheckCircle } from "lucide-react";
+import { Brain, ThumbsUp, AlertTriangle, Lightbulb, CheckCircle, XCircle, Clock } from "lucide-react";
 
 interface CreditMemoProps {
   recommendations: {
@@ -35,30 +35,43 @@ export function AICreditMemo({ recommendations }: CreditMemoProps) {
 
   const r = recommendations;
 
-  const getRecommendationColor = () => {
+  const getRecommendationConfig = () => {
     switch (r.recommendation) {
-      case "approve": return "bg-emerald-100 text-emerald-800";
-      case "approve_with_conditions": return "bg-green-100 text-green-800";
-      case "review": return "bg-amber-100 text-amber-800";
-      case "decline": return "bg-red-100 text-red-800";
-      default: return "bg-muted text-muted-foreground";
+      case "approve": return { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-800", icon: CheckCircle, label: "APPROVE" };
+      case "approve_with_conditions": return { bg: "bg-green-50 border-green-200", text: "text-green-800", icon: CheckCircle, label: "APPROVE WITH CONDITIONS" };
+      case "review": return { bg: "bg-amber-50 border-amber-200", text: "text-amber-800", icon: Clock, label: "REVIEW REQUIRED" };
+      case "decline": return { bg: "bg-red-50 border-red-200", text: "text-red-800", icon: XCircle, label: "DECLINE" };
+      default: return { bg: "bg-muted", text: "text-muted-foreground", icon: Clock, label: r.recommendation.replace(/_/g, " ").toUpperCase() };
     }
   };
+
+  const recConfig = getRecommendationConfig();
+  const RecIcon = recConfig.icon;
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Brain className="h-5 w-5 text-brand" />
-            AI Credit Assessment
-          </CardTitle>
-          <Badge className={getRecommendationColor()}>
-            {r.recommendation.replace(/_/g, " ").toUpperCase()}
-          </Badge>
-        </div>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Brain className="h-5 w-5 text-brand" />
+          AI Credit Assessment
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Recommendation Banner */}
+        <div className={`flex items-center gap-3 p-3 rounded-lg border ${recConfig.bg}`}>
+          <RecIcon className={`h-6 w-6 ${recConfig.text} shrink-0`} />
+          <div>
+            <p className={`text-base font-bold ${recConfig.text}`}>
+              {recConfig.label}
+            </p>
+            {r.suggested_max_amount != null && (
+              <p className={`text-sm ${recConfig.text} opacity-80`}>
+                Up to {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(r.suggested_max_amount)}
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Narrative */}
         <p className="text-sm leading-relaxed">{r.narrative}</p>
 
@@ -125,15 +138,6 @@ export function AICreditMemo({ recommendations }: CreditMemoProps) {
           </div>
         )}
 
-        {/* Suggested Amount */}
-        {r.suggested_max_amount != null && (
-          <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-sm text-muted-foreground">Suggested Max Loan Amount</span>
-            <span className="font-semibold text-primary">
-              {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(r.suggested_max_amount)}
-            </span>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

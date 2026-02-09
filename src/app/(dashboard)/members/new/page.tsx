@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -129,13 +129,6 @@ export default function NewMemberPage() {
 
   return (
     <div className="space-y-6">
-      <Link href="/members">
-        <Button variant="ghost" size="sm" className="gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Members
-        </Button>
-      </Link>
-
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
           New Member

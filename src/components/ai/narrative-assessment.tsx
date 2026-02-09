@@ -16,7 +16,18 @@ interface NarrativeAssessmentProps {
 }
 
 export function NarrativeAssessment({ assessment }: NarrativeAssessmentProps) {
-  if (!assessment) return null;
+  if (!assessment) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="flex items-center justify-center py-8 text-muted-foreground">
+          <Brain className="h-5 w-5 mr-2 opacity-50" />
+          <span className="text-sm">
+            AI narrative analysis available &mdash; click &quot;AI Narrative Analysis&quot; above
+          </span>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const a = assessment;
 

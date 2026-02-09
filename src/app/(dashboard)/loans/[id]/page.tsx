@@ -23,8 +23,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LoanAIActions } from "@/components/ai/loan-ai-actions";
@@ -95,14 +93,6 @@ export default async function LoanDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Back Button */}
-      <Link href="/loans">
-        <Button variant="ghost" size="sm" className="gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Loans
-        </Button>
-      </Link>
-
       {/* Header */}
       <Card>
         <CardContent className="pt-6">
@@ -221,6 +211,7 @@ export default async function LoanDetailPage({
               No payment schedule generated yet.
             </p>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -236,7 +227,7 @@ export default async function LoanDetailPage({
               </TableHeader>
               <TableBody>
                 {loan.payments.map((payment, index) => (
-                  <TableRow key={payment.id}>
+                  <TableRow key={payment.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="text-muted-foreground">
                       {index + 1}
                     </TableCell>
@@ -279,6 +270,7 @@ export default async function LoanDetailPage({
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -294,6 +286,7 @@ export default async function LoanDetailPage({
               No guarantors assigned to this loan.
             </p>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -305,7 +298,7 @@ export default async function LoanDetailPage({
               </TableHeader>
               <TableBody>
                 {loan.guarantors.map((g) => (
-                  <TableRow key={g.id}>
+                  <TableRow key={g.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell>
                       <Link
                         href={`/members/${g.guarantor.id}`}
@@ -338,6 +331,7 @@ export default async function LoanDetailPage({
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -349,6 +343,7 @@ export default async function LoanDetailPage({
             <CardTitle>Loan Interviews</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -360,7 +355,7 @@ export default async function LoanDetailPage({
               </TableHeader>
               <TableBody>
                 {loan.interviews.map((interview) => (
-                  <TableRow key={interview.id}>
+                  <TableRow key={interview.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="text-muted-foreground">
                       {formatShortDate(interview.startedAt)}
                     </TableCell>
@@ -397,6 +392,7 @@ export default async function LoanDetailPage({
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       )}

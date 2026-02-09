@@ -168,11 +168,13 @@ export default async function ScoringPage() {
         </CardHeader>
         <CardContent>
           {recentScores.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No credit scores have been computed yet. Run batch scoring to
-              generate scores for all members.
-            </p>
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Calculator className="h-12 w-12 mb-3 opacity-30" />
+              <p className="text-sm font-medium">No credit scores computed yet</p>
+              <p className="text-xs mt-1">Run batch scoring to generate scores for all members</p>
+            </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -186,7 +188,7 @@ export default async function ScoringPage() {
               </TableHeader>
               <TableBody>
                 {recentScores.map((score) => (
-                  <TableRow key={score.id}>
+                  <TableRow key={score.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell>
                       <Link
                         href={`/members/${score.member.id}`}
@@ -223,6 +225,7 @@ export default async function ScoringPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

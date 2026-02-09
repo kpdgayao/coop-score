@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus } from "lucide-react";
+import { Users, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MemberSearch } from "@/components/members/member-search";
@@ -84,10 +84,22 @@ export default async function MembersPage({
       <Card>
         <CardContent className="pt-6">
           {members.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No members found{q ? ` matching "${q}"` : ""}.
-            </p>
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Users className="h-12 w-12 mb-3 opacity-30" />
+              <p className="text-sm font-medium">
+                {q ? `No members found matching "${q}"` : "No members registered yet"}
+              </p>
+              {!q && (
+                <Link href="/members/new" className="mt-3">
+                  <Button size="sm" variant="outline" className="gap-1">
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Add your first member
+                  </Button>
+                </Link>
+              )}
+            </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -105,7 +117,7 @@ export default async function MembersPage({
                 {members.map((member) => {
                   const latestScore = member.creditScores[0];
                   return (
-                    <TableRow key={member.id}>
+                    <TableRow key={member.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell>
                         <Link
                           href={`/members/${member.id}`}
@@ -165,6 +177,7 @@ export default async function MembersPage({
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

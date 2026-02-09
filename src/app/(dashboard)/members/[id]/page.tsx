@@ -29,7 +29,6 @@ import {
   Briefcase,
   DollarSign,
   Calendar,
-  ArrowLeft,
   FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -101,14 +100,6 @@ export default async function MemberProfilePage({
 
   return (
     <div className="space-y-6">
-      {/* Back Button */}
-      <Link href="/members">
-        <Button variant="ghost" size="sm" className="gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Members
-        </Button>
-      </Link>
-
       {/* Header Section */}
       <Card>
         <CardContent className="pt-6">
@@ -227,6 +218,7 @@ export default async function MemberProfilePage({
                 No loan history found.
               </p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -240,7 +232,7 @@ export default async function MemberProfilePage({
                 </TableHeader>
                 <TableBody>
                   {member.loans.map((loan) => (
-                    <TableRow key={loan.id}>
+                    <TableRow key={loan.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell>
                         <Link
                           href={`/loans/${loan.id}`}
@@ -277,6 +269,7 @@ export default async function MemberProfilePage({
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -302,6 +295,7 @@ export default async function MemberProfilePage({
                 No share capital transactions found.
               </p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -313,7 +307,7 @@ export default async function MemberProfilePage({
                 </TableHeader>
                 <TableBody>
                   {member.shareCapital.map((tx) => (
-                    <TableRow key={tx.id}>
+                    <TableRow key={tx.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="text-muted-foreground">
                         {formatShortDate(tx.transactionDate)}
                       </TableCell>
@@ -338,6 +332,7 @@ export default async function MemberProfilePage({
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -401,6 +396,7 @@ export default async function MemberProfilePage({
               <CardTitle className="text-base">Committee Service History</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -413,7 +409,7 @@ export default async function MemberProfilePage({
                 </TableHeader>
                 <TableBody>
                   {member.committeeService.map((cs) => (
-                    <TableRow key={cs.id}>
+                    <TableRow key={cs.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-medium">
                         {cs.committeeName}
                       </TableCell>
@@ -442,6 +438,7 @@ export default async function MemberProfilePage({
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -453,6 +450,7 @@ export default async function MemberProfilePage({
               <CardTitle className="text-base">Guarantor Obligations</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -464,7 +462,7 @@ export default async function MemberProfilePage({
                 </TableHeader>
                 <TableBody>
                   {member.guarantorOf.map((g) => (
-                    <TableRow key={g.id}>
+                    <TableRow key={g.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell>
                         <Link
                           href={`/loans/${g.loan.id}`}
@@ -500,6 +498,7 @@ export default async function MemberProfilePage({
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         )}

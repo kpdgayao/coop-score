@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Brain, Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { AILoadingIndicator } from "@/components/ai/ai-loading-indicator";
 import { NarrativeAssessment } from "@/components/ai/narrative-assessment";
 import { InterviewChat } from "@/components/ai/interview-chat";
 
@@ -83,6 +84,9 @@ export function LoanAIActions({
         </Button>
       </div>
 
+      {analyzingNarrative && (
+        <AILoadingIndicator message="Analyzing loan narrative..." />
+      )}
       {narrativeError && (
         <p className="text-sm text-red-600">{narrativeError}</p>
       )}

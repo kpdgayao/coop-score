@@ -17,6 +17,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Users, FileText, Calculator, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { ScoreDistributionChart } from "@/components/charts/score-distribution-chart";
+import { AnomalyAlertCard } from "@/components/ai/anomaly-alert-card";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +31,7 @@ export default async function DashboardPage() {
     delinquentLoans,
     recentScores,
     recentAlerts,
+    scoreDistribution,
   ] = await Promise.all([
     prisma.member.count(),
     prisma.loan.count({
@@ -58,9 +61,30 @@ export default async function DashboardPage() {
       take: 5,
       orderBy: { detectedAt: "desc" },
       include: {
-        member: { select: { firstName: true, lastName: true, id: true } },
+        member: { select: { firstName: true, lastName: true, id: true, membershipNumber: true } },
       },
     }),
+    // Score distribution for chart
+    Promise.all(
+      (["EXCELLENT", "GOOD", "FAIR", "MARGINAL", "HIGH_RISK"] as const).map(async (cat) => {
+        const count = await prisma.creditScore.count({
+          where: {
+            riskCategory: cat,
+            id: {
+              in: await prisma.creditScore
+                .findMany({
+                  where: { riskCategory: cat },
+                  distinct: ["memberId"],
+                  orderBy: { scoreDate: "desc" },
+                  select: { id: true },
+                })
+                .then((scores) => scores.map((s) => s.id)),
+            },
+          },
+        });
+        return { category: cat, count };
+      })
+    ),
   ]);
 
   const avgScore = Math.round(avgScoreResult._avg.totalScore ?? 0);
@@ -81,66 +105,84 @@ export default async function DashboardPage() {
 
       {/* Stat Cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Members
-            </CardTitle>
-            <Users className="h-5 w-5 text-green-700" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{totalMembers.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Registered cooperative members
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/members">
+          <Card className="hover:shadow-md hover:border-primary/20 transition-all cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Members
+              </CardTitle>
+              <Users className="h-5 w-5 text-green-700" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{totalMembers.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Registered cooperative members
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Loans
-            </CardTitle>
-            <FileText className="h-5 w-5 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{activeLoans.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Currently released and active
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/loans">
+          <Card className="hover:shadow-md hover:border-primary/20 transition-all cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Active Loans
+              </CardTitle>
+              <FileText className="h-5 w-5 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{activeLoans.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Currently released and active
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Average Credit Score
-            </CardTitle>
-            <Calculator className="h-5 w-5 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{avgScore}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Across all scored members
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/scoring">
+          <Card className="hover:shadow-md hover:border-primary/20 transition-all cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Average Credit Score
+              </CardTitle>
+              <Calculator className="h-5 w-5 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{avgScore}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Across all scored members
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Delinquency Rate
-            </CardTitle>
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{delinquencyRate}%</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Delinquent or defaulted loans
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/loans">
+          <Card className="hover:shadow-md hover:border-primary/20 transition-all cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Delinquency Rate
+              </CardTitle>
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{delinquencyRate}%</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Delinquent or defaulted loans
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
+
+      {/* Score Distribution Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Score Distribution</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScoreDistributionChart data={scoreDistribution} />
+        </CardContent>
+      </Card>
 
       {/* Bottom Section */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -151,56 +193,60 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {recentScores.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                No credit scores computed yet.
-              </p>
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <Calculator className="h-12 w-12 mb-3 opacity-30" />
+                <p className="text-sm font-medium">No credit scores computed yet</p>
+                <p className="text-xs mt-1">Run batch scoring to generate scores for all members</p>
+              </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Member</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Risk Category</TableHead>
-                    <TableHead>Pathway</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentScores.map((score) => (
-                    <TableRow key={score.id}>
-                      <TableCell>
-                        <Link
-                          href={`/members/${score.member.id}`}
-                          className="font-medium hover:underline"
-                        >
-                          {score.member.lastName}, {score.member.firstName}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        {score.totalScore}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={getRiskBgColor(score.riskCategory)}
-                        >
-                          {getRiskLabel(score.riskCategory)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {score.scoringPathway === "THIN_FILE"
-                            ? "Thin File"
-                            : "Standard"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatShortDate(score.scoreDate)}
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Member</TableHead>
+                      <TableHead>Score</TableHead>
+                      <TableHead>Risk Category</TableHead>
+                      <TableHead>Pathway</TableHead>
+                      <TableHead>Date</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {recentScores.map((score) => (
+                      <TableRow key={score.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell>
+                          <Link
+                            href={`/members/${score.member.id}`}
+                            className="font-medium hover:underline"
+                          >
+                            {score.member.lastName}, {score.member.firstName}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          {score.totalScore}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="secondary"
+                            className={getRiskBgColor(score.riskCategory)}
+                          >
+                            {getRiskLabel(score.riskCategory)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {score.scoringPathway === "THIN_FILE"
+                              ? "Thin File"
+                              : "Standard"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatShortDate(score.scoreDate)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -212,40 +258,30 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {recentAlerts.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                No anomaly alerts detected.
-              </p>
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <AlertTriangle className="h-12 w-12 mb-3 opacity-30" />
+                <p className="text-sm font-medium">No anomaly alerts detected</p>
+                <p className="text-xs mt-1">The system monitors member behavior patterns</p>
+              </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentAlerts.map((alert) => (
-                  <div
+                  <AnomalyAlertCard
                     key={alert.id}
-                    className="flex flex-col gap-1.5 border-b pb-3 last:border-0 last:pb-0"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <Badge
-                        variant="secondary"
-                        className={getSeverityColor(alert.severity)}
-                      >
-                        {alert.severity}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {formatShortDate(alert.detectedAt)}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/members/${alert.member.id}`}
-                      className="text-sm font-medium hover:underline"
-                    >
-                      {alert.member.lastName}, {alert.member.firstName}
-                    </Link>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      <span className="font-medium">
-                        {alert.alertType.replace(/_/g, " ")}
-                      </span>{" "}
-                      &mdash; {alert.description}
-                    </p>
-                  </div>
+                    alert={{
+                      id: alert.id,
+                      alertType: alert.alertType,
+                      severity: alert.severity,
+                      description: alert.description,
+                      status: alert.status,
+                      detectedAt: alert.detectedAt,
+                      member: {
+                        firstName: alert.member.firstName,
+                        lastName: alert.member.lastName,
+                        membershipNumber: alert.member.membershipNumber,
+                      },
+                    }}
+                  />
                 ))}
               </div>
             )}

@@ -141,10 +141,18 @@ export default async function LoansPage() {
       <Card>
         <CardContent className="pt-6">
           {loans.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No loan applications found.
-            </p>
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <FileText className="h-12 w-12 mb-3 opacity-30" />
+              <p className="text-sm font-medium">No loan applications found</p>
+              <Link href="/loans/new" className="mt-3">
+                <Button size="sm" variant="outline" className="gap-1">
+                  <Plus className="h-3.5 w-3.5" />
+                  Create first application
+                </Button>
+              </Link>
+            </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -159,7 +167,7 @@ export default async function LoansPage() {
               </TableHeader>
               <TableBody>
                 {loans.map((loan) => (
-                  <TableRow key={loan.id}>
+                  <TableRow key={loan.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell>
                       <Link
                         href={`/loans/${loan.id}`}
@@ -203,6 +211,7 @@ export default async function LoansPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

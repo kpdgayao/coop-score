@@ -95,10 +95,13 @@ export default async function ActivitiesPage() {
       <Card>
         <CardContent className="pt-6">
           {activities.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No activities recorded yet.
-            </p>
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Calendar className="h-12 w-12 mb-3 opacity-30" />
+              <p className="text-sm font-medium">No activities recorded yet</p>
+              <p className="text-xs mt-1">Start tracking cooperative events and member participation</p>
+            </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -117,7 +120,7 @@ export default async function ActivitiesPage() {
                   ).length;
                   const totalInvited = activity.attendance.length;
                   return (
-                    <TableRow key={activity.id}>
+                    <TableRow key={activity.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-medium">
                         {activity.title}
                       </TableCell>
@@ -161,6 +164,7 @@ export default async function ActivitiesPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2, CheckCircle, Search } from "lucide-react";
+import { Loader2, CheckCircle, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -150,14 +150,6 @@ function NewLoanForm() {
 
   return (
     <div className="space-y-6">
-      {/* Back Button */}
-      <Link href="/loans">
-        <Button variant="ghost" size="sm" className="gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Loans
-        </Button>
-      </Link>
-
       {/* Page Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">

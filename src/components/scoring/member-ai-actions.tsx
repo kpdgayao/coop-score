@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, Brain, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { AILoadingIndicator } from "@/components/ai/ai-loading-indicator";
 import { AICreditMemo } from "@/components/scoring/ai-credit-memo";
 import { DimensionRadar } from "@/components/scoring/dimension-radar";
 import { ScoreHistory } from "@/components/scoring/score-history";
@@ -159,6 +160,12 @@ export function MemberAIActions({
         )}
       </div>
 
+      {computingScore && (
+        <AILoadingIndicator message="Computing credit score..." />
+      )}
+      {generatingMemo && (
+        <AILoadingIndicator message="Generating AI credit memo..." />
+      )}
       {scoreError && (
         <p className="text-sm text-red-600">{scoreError}</p>
       )}
@@ -224,8 +231,11 @@ export function MemberAIActions({
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ width: `${dim.score}%` }}
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${dim.score}%`,
+                          backgroundColor: dim.score >= 70 ? "#16a34a" : dim.score >= 40 ? "#f59e0b" : "#ef4444",
+                        }}
                       />
                     </div>
                   </div>
