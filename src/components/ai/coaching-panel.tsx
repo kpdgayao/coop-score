@@ -83,7 +83,7 @@ export function CoachingPanel({ coaching }: CoachingPanelProps) {
               <div
                 className="h-full bg-teal rounded-full transition-all"
                 style={{
-                  width: `${((c.next_milestone.current_score - 300) / (c.next_milestone.target_score - 300)) * 100}%`,
+                  width: `${Math.min(100, Math.max(0, ((c.next_milestone.current_score - 300) / Math.max(1, c.next_milestone.target_score - 300)) * 100))}%`,
                 }}
               />
             </div>
