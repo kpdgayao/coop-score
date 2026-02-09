@@ -18,8 +18,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { MemberSearch } from "@/components/members/member-search";
 
 export const dynamic = "force-dynamic";
@@ -79,11 +80,19 @@ export default async function MembersPage({
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Members</h1>
-        <p className="text-muted-foreground">
-          Manage cooperative members
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Members</h1>
+          <p className="text-muted-foreground">
+            Manage cooperative members
+          </p>
+        </div>
+        <Link href="/members/new">
+          <Button className="gap-2 w-full sm:w-auto">
+            <UserPlus className="h-4 w-4" />
+            New Member
+          </Button>
+        </Link>
       </div>
 
       {/* Search and Filters */}

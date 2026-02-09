@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Card,
   CardHeader,
@@ -40,7 +41,16 @@ interface MemberResult {
 }
 
 export default function NewLoanPage() {
+  return (
+    <Suspense>
+      <NewLoanForm />
+    </Suspense>
+  );
+}
+
+function NewLoanForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loanType, setLoanType] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
   const [selectedMember, setSelectedMember] = useState<MemberResult | null>(null);
@@ -52,6 +62,25 @@ export default function NewLoanPage() {
   const [purpose, setPurpose] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Pre-fill member from query params (when coming from member profile)
+  useEffect(() => {
+    const memberId = searchParams.get("memberId");
+    const memberName = searchParams.get("memberName");
+    const memberNumber = searchParams.get("memberNumber");
+    if (memberId && memberName && memberNumber) {
+      const [firstName, ...rest] = memberName.split(" ");
+      const lastName = rest.join(" ");
+      const member: MemberResult = {
+        id: memberId,
+        firstName,
+        lastName,
+        membershipNumber: memberNumber,
+      };
+      setSelectedMember(member);
+      setMemberSearch(`${firstName} ${lastName} (${memberNumber})`);
+    }
+  }, [searchParams]);
 
   const searchMembers = async (q: string) => {
     setMemberSearch(q);

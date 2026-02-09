@@ -1,5 +1,84 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { z } from "zod";
+
+const CreateMemberSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  middleName: z.string().optional(),
+  dateOfBirth: z.string().min(1),
+  gender: z.enum(["MALE", "FEMALE"]),
+  civilStatus: z.enum(["SINGLE", "MARRIED", "WIDOWED", "SEPARATED"]),
+  barangay: z.string().min(1),
+  city: z.string().default("Cagayan de Oro"),
+  province: z.string().default("Misamis Oriental"),
+  contactNumber: z.string().min(1),
+  email: z.string().email().optional().or(z.literal("")),
+  employmentType: z.enum(["EMPLOYED", "SELF_EMPLOYED", "BUSINESS_OWNER", "FARMER", "UNEMPLOYED"]),
+  employerOrBusiness: z.string().optional(),
+  monthlyIncome: z.number().min(0),
+  membershipDate: z.string().optional(),
+});
+
+// POST /api/members - Create a new member
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const data = CreateMemberSchema.parse(body);
+
+    // Generate membership number: OIC-YYXXXX
+    const year = new Date().getFullYear().toString().slice(2);
+    let membershipNumber: string;
+    let attempts = 0;
+    do {
+      const rand = Math.floor(Math.random() * 9999) + 1;
+      membershipNumber = `OIC-${year}${String(rand).padStart(4, "0")}`;
+      const existing = await prisma.member.findUnique({
+        where: { membershipNumber },
+        select: { id: true },
+      });
+      if (!existing) break;
+      attempts++;
+    } while (attempts < 20);
+
+    const member = await prisma.member.create({
+      data: {
+        membershipNumber,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        middleName: data.middleName || null,
+        dateOfBirth: new Date(data.dateOfBirth),
+        gender: data.gender,
+        civilStatus: data.civilStatus,
+        barangay: data.barangay,
+        city: data.city,
+        province: data.province,
+        contactNumber: data.contactNumber,
+        email: data.email || null,
+        employmentType: data.employmentType,
+        employerOrBusiness: data.employerOrBusiness || null,
+        monthlyIncome: data.monthlyIncome,
+        membershipDate: data.membershipDate
+          ? new Date(data.membershipDate)
+          : new Date(),
+      },
+    });
+
+    return NextResponse.json(member, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: error.issues },
+        { status: 400 }
+      );
+    }
+    console.error("Member create error:", error);
+    return NextResponse.json(
+      { error: "Failed to create member" },
+      { status: 500 }
+    );
+  }
+}
 
 // GET /api/members - List all members with optional search/filter
 export async function GET(request: NextRequest) {

@@ -27,6 +27,7 @@ import {
   DollarSign,
   Calendar,
   ArrowLeft,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -166,6 +167,12 @@ export default async function MemberProfilePage({
                 </div>
               </div>
             </div>
+            <Link href={`/loans/new?memberId=${member.id}&memberName=${encodeURIComponent(`${member.firstName} ${member.lastName}`)}&memberNumber=${member.membershipNumber}`}>
+              <Button className="gap-2 w-full md:w-auto">
+                <FileText className="h-4 w-4" />
+                Apply for Loan
+              </Button>
+            </Link>
           </div>
 
           {/* Basic Info Grid */}
