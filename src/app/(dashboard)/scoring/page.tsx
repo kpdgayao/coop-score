@@ -120,7 +120,7 @@ export default async function ScoringPage() {
             <span className="hidden sm:inline">Score Individual</span>
             <span className="sm:hidden">Score</span>
           </Button>
-          <Button className="gap-2" size="sm">
+          <Button className="gap-2" size="sm" disabled title="Batch scoring is disabled during demo">
             <Play className="h-4 w-4" />
             <span className="hidden sm:inline">Run Batch Scoring</span>
             <span className="sm:hidden">Batch</span>

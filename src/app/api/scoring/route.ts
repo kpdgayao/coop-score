@@ -9,27 +9,10 @@ export async function POST(request: NextRequest) {
     const { memberId, batch } = body;
 
     if (batch) {
-      // Batch scoring for all active members
-      const members = await prisma.member.findMany({
-        where: { membershipStatus: "ACTIVE" },
-        select: { id: true },
-      });
-
-      const results = [];
-      for (const member of members) {
-        try {
-          const result = await computeAndSaveScore(member.id);
-          results.push({ memberId: member.id, score: result.totalScore, success: true });
-        } catch {
-          results.push({ memberId: member.id, success: false });
-        }
-      }
-
-      return NextResponse.json({
-        processed: results.length,
-        successful: results.filter((r) => r.success).length,
-        results,
-      });
+      return NextResponse.json(
+        { error: "Batch scoring is temporarily disabled" },
+        { status: 403 }
+      );
     }
 
     if (!memberId) {

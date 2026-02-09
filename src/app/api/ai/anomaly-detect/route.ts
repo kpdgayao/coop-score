@@ -7,8 +7,10 @@ export async function POST(request: NextRequest) {
     const { memberId, batch } = await request.json();
 
     if (batch) {
-      const result = await batchDetectAnomalies();
-      return NextResponse.json(result);
+      return NextResponse.json(
+        { error: "Batch anomaly detection is temporarily disabled" },
+        { status: 403 }
+      );
     }
 
     if (!memberId) {
