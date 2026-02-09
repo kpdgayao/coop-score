@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { formatShortDate } from "@/lib/format";
+import { formatShortDate, getActivityTypeColor, formatEnumLabel } from "@/lib/format";
 import {
   Card,
   CardHeader,
@@ -18,41 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-function getActivityTypeColor(type: string): string {
-  switch (type) {
-    case "GENERAL_ASSEMBLY":
-      return "bg-blue-100 text-blue-800";
-    case "TRAINING":
-      return "bg-purple-100 text-purple-800";
-    case "SEMINAR":
-      return "bg-indigo-100 text-indigo-800";
-    case "COMMITTEE_MEETING":
-      return "bg-slate-100 text-slate-800";
-    case "COMMUNITY_SERVICE":
-      return "bg-emerald-100 text-emerald-800";
-    case "VOLUNTEER":
-      return "bg-green-100 text-green-800";
-    case "ELECTION":
-      return "bg-amber-100 text-amber-800";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
-
-function formatActivityType(type: string): string {
-  return type
-    .split("_")
-    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
-    .join(" ");
-}
-
-function formatCategory(category: string): string {
-  return category
-    .split("_")
-    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
-    .join(" ");
-}
 
 export default async function ActivitiesPage() {
   const activities = await prisma.coopActivity.findMany({
@@ -161,11 +126,11 @@ export default async function ActivitiesPage() {
                           variant="secondary"
                           className={getActivityTypeColor(activity.activityType)}
                         >
-                          {formatActivityType(activity.activityType)}
+                          {formatEnumLabel(activity.activityType)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {formatCategory(activity.category)}
+                        {formatEnumLabel(activity.category)}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {formatShortDate(activity.date)}

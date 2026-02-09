@@ -9,6 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
 } from "recharts";
 import { formatShortDate } from "@/lib/format";
 
@@ -26,6 +27,12 @@ export function ScoreHistory({ data }: ScoreHistoryProps) {
     <ResponsiveContainer width="100%" height={250}>
       <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+        {/* Tier background bands */}
+        <ReferenceArea y1={300} y2={449} fill="#ef4444" fillOpacity={0.04} />
+        <ReferenceArea y1={450} y2={549} fill="#f97316" fillOpacity={0.04} />
+        <ReferenceArea y1={550} y2={649} fill="#f59e0b" fillOpacity={0.04} />
+        <ReferenceArea y1={650} y2={749} fill="#16a34a" fillOpacity={0.04} />
+        <ReferenceArea y1={750} y2={850} fill="#15803d" fillOpacity={0.04} />
         <XAxis
           dataKey="date"
           tick={{ fontSize: 11, fill: "#64748b" }}

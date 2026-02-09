@@ -3,6 +3,9 @@ import {
   formatCurrency,
   formatDate,
   formatShortDate,
+  getLoanStatusColor,
+  getPaymentStatusColor,
+  formatEnumLabel,
 } from "@/lib/format";
 import {
   Card,
@@ -27,43 +30,6 @@ import { notFound } from "next/navigation";
 import { LoanAIActions } from "@/components/ai/loan-ai-actions";
 
 export const dynamic = "force-dynamic";
-
-function getLoanStatusColor(status: string): string {
-  switch (status) {
-    case "CURRENT":
-    case "RELEASED":
-      return "bg-emerald-100 text-emerald-800";
-    case "PAID":
-      return "bg-blue-100 text-blue-800";
-    case "PENDING":
-      return "bg-amber-100 text-amber-800";
-    case "APPROVED":
-      return "bg-green-100 text-green-800";
-    case "DELINQUENT":
-      return "bg-orange-100 text-orange-800";
-    case "DEFAULT":
-      return "bg-red-100 text-red-800";
-    case "RESTRUCTURED":
-      return "bg-purple-100 text-purple-800";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
-
-function getPaymentStatusColor(status: string): string {
-  switch (status) {
-    case "ON_TIME":
-      return "bg-emerald-100 text-emerald-800";
-    case "LATE":
-      return "bg-amber-100 text-amber-800";
-    case "MISSED":
-      return "bg-red-100 text-red-800";
-    case "PARTIAL":
-      return "bg-orange-100 text-orange-800";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
 
 interface NarrativeAssessmentData {
   score: number;

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 import { callAI } from "@/lib/ai/client";
 import {
   NarrativeAssessmentSchema,
@@ -12,13 +13,16 @@ const FEATURE_NAME = "narrative-analysis";
 const COST_PER_INPUT_TOKEN = 0.000003; // $3 per 1M input tokens (Sonnet)
 const COST_PER_OUTPUT_TOKEN = 0.000015; // $15 per 1M output tokens (Sonnet)
 
-function buildSystemPrompt(): string {
+function buildSystemPrompt(hasInterview: boolean): string {
   return `You are a credit analyst for a Philippine cooperative. Analyze the following loan application narrative and member profile. Assess the loan purpose for:
 1. Clarity and specificity (vague = higher risk)
 2. Alignment with the member's employment/income profile
 3. Realistic scope given the loan amount requested
 4. Productive vs. consumptive purpose
 5. Any red flags or inconsistencies
+${hasInterview ? `6. Consistency with the loan interview findings — if an interview was conducted, its results are CRITICAL. Significant discrepancies between the application and interview (e.g., inconsistent information, inability to articulate plans, low coherence) MUST substantially lower the score and raise the risk level.` : ""}
+
+IMPORTANT:${hasInterview ? " If interview data is provided, it should heavily influence your assessment — the interview reveals the applicant's actual understanding and credibility, which overrides a well-written application form." : " No interview data is available yet. Base your assessment solely on the application and member profile."}
 
 Return ONLY a JSON object with the following fields:
 - score (number 0-100, where 100 = excellent purpose clarity and alignment)
@@ -29,6 +33,16 @@ Return ONLY a JSON object with the following fields:
 - alignment_with_profile ("strong" | "moderate" | "weak" | "misaligned")
 
 Do NOT include any text outside the JSON object.`;
+}
+
+interface InterviewSummary {
+  overallScore: number;
+  coherenceScore: number;
+  financialLiteracyScore: number;
+  businessViabilityScore: number;
+  riskFlags: string[];
+  summary: string;
+  recommendation: string;
 }
 
 function buildUserPrompt(
@@ -43,13 +57,14 @@ function buildUserPrompt(
     purpose: string;
     loanType: string;
   },
-  previousPurposes: string[]
+  previousPurposes: string[],
+  interview: InterviewSummary | null
 ): string {
   const tenureMonths = Math.floor(
     (Date.now() - member.membershipDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
   );
 
-  return `Member Profile:
+  let prompt = `Member Profile:
 - Employment: ${member.employmentType}
 - Business/Employer: ${member.employerOrBusiness || "N/A"}
 - Monthly Income: PHP ${Number(member.monthlyIncome).toLocaleString("en-PH")}
@@ -60,6 +75,21 @@ Loan Application:
 - Amount Requested: PHP ${Number(loan.principalAmount).toLocaleString("en-PH")}
 - Stated Purpose: "${loan.purpose}"
 - Loan Type: ${loan.loanType}`;
+
+  if (interview) {
+    prompt += `
+
+Loan Interview Results (conducted with the applicant):
+- Overall Score: ${interview.overallScore}/100
+- Coherence Score: ${interview.coherenceScore}/100
+- Financial Literacy Score: ${interview.financialLiteracyScore}/100
+- Business Viability Score: ${interview.businessViabilityScore}/100
+- Risk Flags: ${interview.riskFlags.length > 0 ? interview.riskFlags.join("; ") : "None"}
+- Interviewer Summary: ${interview.summary}
+- Interviewer Recommendation: ${interview.recommendation}`;
+  }
+
+  return prompt;
 }
 
 /**
@@ -96,11 +126,37 @@ export async function analyzeNarrative(
 
     const previousPurposes = previousLoans.map((l) => l.purpose);
 
-    const systemPrompt = buildSystemPrompt();
+    // Check for completed interview with assessment
+    let interviewData: InterviewSummary | null = null;
+    const completedInterview = await prisma.loanInterview.findFirst({
+      where: {
+        loanId,
+        status: "COMPLETED",
+        NOT: { assessment: { equals: Prisma.JsonNullValueFilter.DbNull } },
+      },
+      select: { assessment: true },
+      orderBy: { completedAt: "desc" },
+    });
+
+    if (completedInterview?.assessment) {
+      const a = completedInterview.assessment as Record<string, unknown>;
+      interviewData = {
+        overallScore: Number(a.overall_score ?? 0),
+        coherenceScore: Number(a.coherence_score ?? 0),
+        financialLiteracyScore: Number(a.financial_literacy_score ?? 0),
+        businessViabilityScore: Number(a.business_viability_score ?? 0),
+        riskFlags: Array.isArray(a.risk_flags) ? a.risk_flags as string[] : [],
+        summary: String(a.summary ?? ""),
+        recommendation: String(a.recommendation ?? ""),
+      };
+    }
+
+    const systemPrompt = buildSystemPrompt(!!interviewData);
     const userPrompt = buildUserPrompt(
       { ...loan.member, monthlyIncome: Number(loan.member.monthlyIncome) },
       { ...loan, principalAmount: Number(loan.principalAmount) },
-      previousPurposes
+      previousPurposes,
+      interviewData
     );
 
     // Call AI

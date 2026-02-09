@@ -23,6 +23,7 @@ import {
 import { ArrowLeft, Loader2, CheckCircle, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const LOAN_TYPES = [
   { value: "MICRO", label: "Micro" },
@@ -137,9 +138,12 @@ function NewLoanForm() {
       }
 
       const loan = await res.json();
+      toast.success("Loan application submitted successfully");
       router.push(`/loans/${loan.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit loan application.");
+      const msg = err instanceof Error ? err.message : "Failed to submit loan application.";
+      setError(msg);
+      toast.error(msg);
       setSubmitting(false);
     }
   };

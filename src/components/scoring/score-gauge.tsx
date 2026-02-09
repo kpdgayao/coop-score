@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { getRiskLabel } from "@/lib/format";
 
@@ -21,8 +22,35 @@ export function ScoreGauge({
   showLabel = true,
 }: ScoreGaugeProps) {
   const range = maxScore - minScore;
-  const normalized = Math.max(0, Math.min(1, (score - minScore) / range));
+  const targetNormalized = Math.max(0, Math.min(1, (score - minScore) / range));
   const strokeWidth = size === "sm" ? 8 : size === "md" ? 10 : 14;
+
+  // Animation state
+  const [animatedNormalized, setAnimatedNormalized] = useState(0);
+  const [displayScore, setDisplayScore] = useState(minScore);
+
+  useEffect(() => {
+    const duration = 1200;
+    const startTime = performance.now();
+    const startNorm = 0;
+    const startScore = minScore;
+
+    function animate(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      setAnimatedNormalized(startNorm + (targetNormalized - startNorm) * eased);
+      setDisplayScore(Math.round(startScore + (score - startScore) * eased));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }, [score, minScore, targetNormalized]);
 
   const labelSize = { sm: "text-xs", md: "text-sm", lg: "text-base" };
   const fontSizes = { sm: 28, md: 38, lg: 48 };
@@ -38,22 +66,45 @@ export function ScoreGauge({
   const cy = dim.height - 5;
   const r = cx - strokeWidth;
 
-  // Semicircle endpoints: left (cx-r, cy) to right (cx+r, cy)
   const leftX = cx - r;
   const rightX = cx + r;
 
-  // Background: full semicircle from left to right through the top
+  // Background track with colored segments
   const bgArc = `M ${leftX} ${cy} A ${r} ${r} 0 0 1 ${rightX} ${cy}`;
 
-  // Score endpoint on the arc
-  // Angle sweeps from π (left) to 0 (right) as score goes 0% to 100%
-  const scoreAngle = Math.PI * (1 - normalized);
+  // Segment boundaries (normalized: 0=300, 1=850)
+  const segments = [
+    { end: (449 - minScore) / range, color: "#ef4444" },   // High Risk: red
+    { end: (549 - minScore) / range, color: "#f97316" },   // Marginal: orange
+    { end: (649 - minScore) / range, color: "#f59e0b" },   // Fair: amber
+    { end: (749 - minScore) / range, color: "#16a34a" },   // Good: green
+    { end: 1, color: "#15803d" },                           // Excellent: emerald
+  ];
+
+  // Generate segment arcs
+  const segmentArcs = segments.map((seg, i) => {
+    const startNorm = i === 0 ? 0 : segments[i - 1].end;
+    const endNorm = seg.end;
+    const startAngle = Math.PI * (1 - startNorm);
+    const endAngle = Math.PI * (1 - endNorm);
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy - r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy - r * Math.sin(endAngle);
+    const largeArc = endNorm - startNorm > 0.5 ? 1 : 0;
+    return {
+      d: `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`,
+      color: seg.color,
+    };
+  });
+
+  // Score endpoint
+  const scoreAngle = Math.PI * (1 - animatedNormalized);
   const scoreX = cx + r * Math.cos(scoreAngle);
   const scoreY = cy - r * Math.sin(scoreAngle);
 
-  // Score arc: from left to score point, clockwise (sweep=1) through the top
-  const scoreArc = normalized > 0.005
-    ? `M ${leftX} ${cy} A ${r} ${r} 0 0 1 ${scoreX} ${scoreY}`
+  const scoreArc = animatedNormalized > 0.005
+    ? `M ${leftX} ${cy} A ${r} ${r} 0 ${animatedNormalized > 0.5 ? 1 : 0} 1 ${scoreX} ${scoreY}`
     : "";
 
   const getGaugeColor = () => {
@@ -70,14 +121,18 @@ export function ScoreGauge({
   return (
     <div className="flex flex-col items-center">
       <svg width={dim.width} height={dim.height} viewBox={`0 0 ${dim.width} ${dim.height}`}>
-        {/* Background arc */}
-        <path
-          d={bgArc}
-          fill="none"
-          stroke="#e2e8f0"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
+        {/* Background colored segments */}
+        {segmentArcs.map((seg, i) => (
+          <path
+            key={i}
+            d={seg.d}
+            fill="none"
+            stroke={seg.color}
+            strokeWidth={strokeWidth}
+            strokeLinecap={i === 0 || i === segmentArcs.length - 1 ? "round" : "butt"}
+            opacity={0.15}
+          />
+        ))}
         {/* Score arc */}
         {scoreArc && (
           <path
@@ -86,7 +141,17 @@ export function ScoreGauge({
             stroke={getGaugeColor()}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
+          />
+        )}
+        {/* Needle dot */}
+        {animatedNormalized > 0.005 && (
+          <circle
+            cx={scoreX}
+            cy={scoreY}
+            r={strokeWidth * 0.6}
+            fill={getGaugeColor()}
+            stroke="white"
+            strokeWidth={2}
           />
         )}
         {/* Score text */}
@@ -98,7 +163,7 @@ export function ScoreGauge({
           fontSize={fontSizes[size]}
           fontWeight="bold"
         >
-          {score}
+          {displayScore}
         </text>
         {/* Min/Max labels */}
         <text x={leftX} y={cy + 15} fontSize="10" fill="#94a3b8" textAnchor="middle">

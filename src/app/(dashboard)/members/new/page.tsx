@@ -21,6 +21,7 @@ import {
 import { ArrowLeft, Loader2, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const GENDER_OPTIONS = [
   { value: "MALE", label: "Male" },
@@ -116,11 +117,12 @@ export default function NewMemberPage() {
       }
 
       const member = await res.json();
+      toast.success("Member registered successfully");
       router.push(`/members/${member.id}`);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to create member."
-      );
+      const msg = err instanceof Error ? err.message : "Failed to create member.";
+      setError(msg);
+      toast.error(msg);
       setSubmitting(false);
     }
   };

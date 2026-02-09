@@ -4,6 +4,8 @@ import {
   formatShortDate,
   getRiskBgColor,
   getRiskLabel,
+  getMemberStatusColor,
+  formatEnumLabel,
 } from "@/lib/format";
 import {
   Card,
@@ -24,26 +26,6 @@ import { Button } from "@/components/ui/button";
 import { MemberSearch } from "@/components/members/member-search";
 
 export const dynamic = "force-dynamic";
-
-function getStatusColor(status: string): string {
-  switch (status) {
-    case "ACTIVE":
-      return "bg-emerald-100 text-emerald-800";
-    case "INACTIVE":
-      return "bg-gray-100 text-gray-800";
-    case "TERMINATED":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
-
-function formatEmployment(type: string): string {
-  return type
-    .split("_")
-    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
-    .join(" ");
-}
 
 export default async function MembersPage({
   searchParams,
@@ -144,14 +126,14 @@ export default async function MembersPage({
                       <TableCell>
                         <Badge
                           variant="secondary"
-                          className={getStatusColor(member.membershipStatus)}
+                          className={getMemberStatusColor(member.membershipStatus)}
                         >
                           {member.membershipStatus.charAt(0) +
                             member.membershipStatus.slice(1).toLowerCase()}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {formatEmployment(member.employmentType)}
+                        {formatEnumLabel(member.employmentType)}
                       </TableCell>
                       <TableCell>
                         {formatCurrency(member.monthlyIncome.toString())}

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Plus, Trash2, Play, Loader2, Target, Clock, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface SimulationAction {
   id: string;
@@ -91,8 +92,10 @@ export function WhatIfSimulator({
       if (!res.ok) throw new Error("AI coaching unavailable");
       const result = await res.json();
       setCoaching(result);
+      toast.success("AI coaching generated");
     } catch {
       setError("AI coaching unavailable. Check your API key.");
+      toast.error("AI coaching unavailable");
     }
     setLoading(false);
   };

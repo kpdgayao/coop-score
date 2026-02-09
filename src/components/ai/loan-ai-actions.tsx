@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Brain, Loader2, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
 import { NarrativeAssessment } from "@/components/ai/narrative-assessment";
 import { InterviewChat } from "@/components/ai/interview-chat";
 
@@ -47,8 +48,10 @@ export function LoanAIActions({
       if (!res.ok) throw new Error("AI analysis failed");
       const result = await res.json();
       setNarrative(result);
+      toast.success("AI narrative analysis complete");
     } catch {
       setNarrativeError("Failed to analyze narrative. Check your API key.");
+      toast.error("AI narrative analysis failed");
     }
     setAnalyzingNarrative(false);
   };

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, Brain, Loader2, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { AICreditMemo } from "@/components/scoring/ai-credit-memo";
 import { DimensionRadar } from "@/components/scoring/dimension-radar";
 import { ScoreHistory } from "@/components/scoring/score-history";
@@ -89,8 +90,10 @@ export function MemberAIActions({
         { id: newScore.id, totalScore: newScore.totalScore, riskCategory: newScore.riskCategory, scoreDate: newScore.scoreDate },
         ...prev,
       ]);
+      toast.success(`Credit score computed: ${result.totalScore}`);
     } catch {
       setScoreError("Failed to compute score. Please try again.");
+      toast.error("Failed to compute credit score");
     }
     setComputingScore(false);
   };
@@ -115,8 +118,10 @@ export function MemberAIActions({
       if (!res.ok) throw new Error("AI service unavailable");
       const result = await res.json();
       setRecommendations(result);
+      toast.success("AI credit memo generated");
     } catch {
       setMemoError("AI memo generation failed. Check your API key.");
+      toast.error("AI memo generation failed");
     }
     setGeneratingMemo(false);
   };

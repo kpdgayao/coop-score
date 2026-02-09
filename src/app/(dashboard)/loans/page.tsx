@@ -2,6 +2,9 @@ import { prisma } from "@/lib/db";
 import {
   formatCurrency,
   formatShortDate,
+  getLoanStatusColor,
+  getLoanTypeColor,
+  formatEnumLabel,
 } from "@/lib/format";
 import {
   Card,
@@ -29,47 +32,6 @@ import {
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
-
-function getLoanStatusColor(status: string): string {
-  switch (status) {
-    case "CURRENT":
-    case "RELEASED":
-      return "bg-emerald-100 text-emerald-800";
-    case "PAID":
-      return "bg-blue-100 text-blue-800";
-    case "PENDING":
-      return "bg-amber-100 text-amber-800";
-    case "APPROVED":
-      return "bg-green-100 text-green-800";
-    case "DELINQUENT":
-      return "bg-orange-100 text-orange-800";
-    case "DEFAULT":
-      return "bg-red-100 text-red-800";
-    case "RESTRUCTURED":
-      return "bg-purple-100 text-purple-800";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
-
-function getLoanTypeColor(type: string): string {
-  switch (type) {
-    case "MICRO":
-      return "bg-blue-100 text-blue-800";
-    case "REGULAR":
-      return "bg-slate-100 text-slate-800";
-    case "EMERGENCY":
-      return "bg-red-100 text-red-800";
-    case "EDUCATIONAL":
-      return "bg-purple-100 text-purple-800";
-    case "LIVELIHOOD":
-      return "bg-emerald-100 text-emerald-800";
-    case "HOUSING":
-      return "bg-amber-100 text-amber-800";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
 
 export default async function LoansPage() {
   const [totalLoans, pendingLoans, activeLoans, delinquentLoans, loans] =
@@ -219,8 +181,7 @@ export default async function LoansPage() {
                         variant="secondary"
                         className={getLoanTypeColor(loan.loanType)}
                       >
-                        {loan.loanType.charAt(0) +
-                          loan.loanType.slice(1).toLowerCase()}
+                        {formatEnumLabel(loan.loanType)}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">
@@ -231,8 +192,7 @@ export default async function LoansPage() {
                         variant="secondary"
                         className={getLoanStatusColor(loan.status)}
                       >
-                        {loan.status.charAt(0) +
-                          loan.status.slice(1).toLowerCase()}
+                        {formatEnumLabel(loan.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
