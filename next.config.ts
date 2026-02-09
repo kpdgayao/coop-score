@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     "@prisma/adapter-pg",
     "@prisma/client",
     "pg",
+    "@react-pdf/renderer",
   ],
 };
 

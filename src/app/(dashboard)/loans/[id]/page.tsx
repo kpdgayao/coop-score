@@ -23,6 +23,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LoanAIActions } from "@/components/ai/loan-ai-actions";
@@ -128,8 +130,16 @@ export default async function LoanDetailPage({
                 <span className="font-mono">({loan.member.membershipNumber})</span>
               </p>
             </div>
-            <div className="text-sm text-muted-foreground font-mono">
-              ID: {loan.id.slice(0, 8)}
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground font-mono">
+                ID: {loan.id.slice(0, 8)}
+              </span>
+              <a href={`/api/reports/loan/${loan.id}`} download>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export PDF
+                </Button>
+              </a>
             </div>
           </div>
         </CardContent>
