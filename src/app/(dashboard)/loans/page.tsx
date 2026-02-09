@@ -1,0 +1,251 @@
+import { prisma } from "@/lib/db";
+import {
+  formatCurrency,
+  formatShortDate,
+} from "@/lib/format";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  FileText,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Plus,
+} from "lucide-react";
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
+function getLoanStatusColor(status: string): string {
+  switch (status) {
+    case "CURRENT":
+    case "RELEASED":
+      return "bg-emerald-100 text-emerald-800";
+    case "PAID":
+      return "bg-blue-100 text-blue-800";
+    case "PENDING":
+      return "bg-amber-100 text-amber-800";
+    case "APPROVED":
+      return "bg-teal-100 text-teal-800";
+    case "DELINQUENT":
+      return "bg-orange-100 text-orange-800";
+    case "DEFAULT":
+      return "bg-red-100 text-red-800";
+    case "RESTRUCTURED":
+      return "bg-purple-100 text-purple-800";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
+
+function getLoanTypeColor(type: string): string {
+  switch (type) {
+    case "MICRO":
+      return "bg-blue-100 text-blue-800";
+    case "REGULAR":
+      return "bg-slate-100 text-slate-800";
+    case "EMERGENCY":
+      return "bg-red-100 text-red-800";
+    case "EDUCATIONAL":
+      return "bg-purple-100 text-purple-800";
+    case "LIVELIHOOD":
+      return "bg-emerald-100 text-emerald-800";
+    case "HOUSING":
+      return "bg-amber-100 text-amber-800";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
+
+export default async function LoansPage() {
+  const [totalLoans, pendingLoans, activeLoans, delinquentLoans, loans] =
+    await Promise.all([
+      prisma.loan.count(),
+      prisma.loan.count({ where: { status: "PENDING" } }),
+      prisma.loan.count({
+        where: { status: { in: ["CURRENT", "RELEASED"] } },
+      }),
+      prisma.loan.count({
+        where: { status: { in: ["DELINQUENT", "DEFAULT"] } },
+      }),
+      prisma.loan.findMany({
+        orderBy: { applicationDate: "desc" },
+        include: {
+          member: {
+            select: { firstName: true, lastName: true, id: true },
+          },
+        },
+      }),
+    ]);
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Loan Applications
+          </h1>
+          <p className="text-muted-foreground">
+            Manage and review loan applications
+          </p>
+        </div>
+        <Link href="/loans/new">
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Application
+          </Button>
+        </Link>
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Loans
+            </CardTitle>
+            <FileText className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{totalLoans.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              All time loan records
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Pending Applications
+            </CardTitle>
+            <Clock className="h-5 w-5 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{pendingLoans}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Awaiting review
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Active Loans
+            </CardTitle>
+            <CheckCircle className="h-5 w-5 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{activeLoans}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Currently released and active
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Delinquent
+            </CardTitle>
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{delinquentLoans}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Delinquent or defaulted
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Loans Table */}
+      <Card>
+        <CardContent className="pt-6">
+          {loans.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              No loan applications found.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Loan ID</TableHead>
+                  <TableHead>Member</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Application Date</TableHead>
+                  <TableHead>Term</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loans.map((loan) => (
+                  <TableRow key={loan.id}>
+                    <TableCell>
+                      <Link
+                        href={`/loans/${loan.id}`}
+                        className="font-mono text-sm hover:underline"
+                      >
+                        {loan.id.slice(0, 8)}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/members/${loan.member.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {loan.member.lastName}, {loan.member.firstName}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={getLoanTypeColor(loan.loanType)}
+                      >
+                        {loan.loanType.charAt(0) +
+                          loan.loanType.slice(1).toLowerCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(loan.principalAmount.toString())}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={getLoanStatusColor(loan.status)}
+                      >
+                        {loan.status.charAt(0) +
+                          loan.status.slice(1).toLowerCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatShortDate(loan.applicationDate)}
+                    </TableCell>
+                    <TableCell>{loan.termMonths} months</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
