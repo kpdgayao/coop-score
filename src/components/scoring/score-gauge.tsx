@@ -21,25 +21,40 @@ export function ScoreGauge({
   showLabel = true,
 }: ScoreGaugeProps) {
   const range = maxScore - minScore;
-  const normalized = (score - minScore) / range;
-  const angle = normalized * 180; // 0 to 180 degrees for semicircle
+  const normalized = Math.max(0, Math.min(1, (score - minScore) / range));
   const strokeWidth = size === "sm" ? 8 : size === "md" ? 10 : 14;
 
+  const labelSize = { sm: "text-xs", md: "text-sm", lg: "text-base" };
+  const fontSizes = { sm: 28, md: 38, lg: 48 };
+
   const dimensions = {
-    sm: { width: 140, height: 80, fontSize: "text-2xl", labelSize: "text-xs" },
-    md: { width: 200, height: 110, fontSize: "text-4xl", labelSize: "text-sm" },
-    lg: { width: 280, height: 155, fontSize: "text-5xl", labelSize: "text-base" },
+    sm: { width: 140, height: 80 },
+    md: { width: 200, height: 115 },
+    lg: { width: 280, height: 160 },
   };
 
   const dim = dimensions[size];
   const cx = dim.width / 2;
   const cy = dim.height - 5;
-  const radius = cx - strokeWidth;
+  const r = cx - strokeWidth;
 
-  // Arc path for the background
-  const bgArc = describeArc(cx, cy, radius, 180, 360);
-  // Arc path for the score fill
-  const scoreArc = describeArc(cx, cy, radius, 180, 180 + angle);
+  // Semicircle endpoints: left (cx-r, cy) to right (cx+r, cy)
+  const leftX = cx - r;
+  const rightX = cx + r;
+
+  // Background: full semicircle from left to right through the top
+  const bgArc = `M ${leftX} ${cy} A ${r} ${r} 0 0 1 ${rightX} ${cy}`;
+
+  // Score endpoint on the arc
+  // Angle sweeps from π (left) to 0 (right) as score goes 0% to 100%
+  const scoreAngle = Math.PI * (1 - normalized);
+  const scoreX = cx + r * Math.cos(scoreAngle);
+  const scoreY = cy - r * Math.sin(scoreAngle);
+
+  // Score arc: from left to score point, clockwise (sweep=1) through the top
+  const scoreArc = normalized > 0.005
+    ? `M ${leftX} ${cy} A ${r} ${r} 0 0 1 ${scoreX} ${scoreY}`
+    : "";
 
   const getGaugeColor = () => {
     switch (riskCategory) {
@@ -63,42 +78,33 @@ export function ScoreGauge({
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
-        {/* Color gradient segments */}
-        <defs>
-          <linearGradient id={`gauge-gradient-${size}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#ef4444" />
-            <stop offset="25%" stopColor="#f97316" />
-            <stop offset="50%" stopColor="#f59e0b" />
-            <stop offset="75%" stopColor="#0d9488" />
-            <stop offset="100%" stopColor="#059669" />
-          </linearGradient>
-        </defs>
         {/* Score arc */}
-        <path
-          d={scoreArc}
-          fill="none"
-          stroke={getGaugeColor()}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          className="transition-all duration-1000 ease-out"
-        />
+        {scoreArc && (
+          <path
+            d={scoreArc}
+            fill="none"
+            stroke={getGaugeColor()}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            className="transition-all duration-1000 ease-out"
+          />
+        )}
         {/* Score text */}
         <text
           x={cx}
-          y={cy - 15}
+          y={cy - r * 0.3}
           textAnchor="middle"
-          className={cn(dim.fontSize, "font-bold")}
           fill={getGaugeColor()}
-          fontSize={size === "sm" ? 28 : size === "md" ? 38 : 48}
+          fontSize={fontSizes[size]}
           fontWeight="bold"
         >
           {score}
         </text>
         {/* Min/Max labels */}
-        <text x={strokeWidth} y={cy + 15} fontSize="10" fill="#94a3b8">
+        <text x={leftX} y={cy + 15} fontSize="10" fill="#94a3b8" textAnchor="middle">
           {minScore}
         </text>
-        <text x={dim.width - strokeWidth} y={cy + 15} fontSize="10" fill="#94a3b8" textAnchor="end">
+        <text x={rightX} y={cy + 15} fontSize="10" fill="#94a3b8" textAnchor="middle">
           {maxScore}
         </text>
       </svg>
@@ -106,7 +112,7 @@ export function ScoreGauge({
         <span
           className={cn(
             "font-semibold mt-1 px-3 py-0.5 rounded-full",
-            dim.labelSize,
+            labelSize[size],
             riskCategory === "EXCELLENT" && "bg-emerald-100 text-emerald-800",
             riskCategory === "GOOD" && "bg-teal-100 text-teal-800",
             riskCategory === "FAIR" && "bg-amber-100 text-amber-800",
@@ -119,19 +125,4 @@ export function ScoreGauge({
       )}
     </div>
   );
-}
-
-function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
-  const angleRad = ((angleDeg - 90) * Math.PI) / 180;
-  return {
-    x: cx + r * Math.cos(angleRad),
-    y: cy + r * Math.sin(angleRad),
-  };
-}
-
-function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
 }
