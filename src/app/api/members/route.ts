@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 // GET /api/members - List all members with optional search/filter
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const search = searchParams.get("search");
+  const search = searchParams.get("search") || searchParams.get("q");
   const status = searchParams.get("status");
   const limit = parseInt(searchParams.get("limit") || "50");
 

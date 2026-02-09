@@ -7,8 +7,6 @@ import {
 } from "@/lib/format";
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
 } from "@/components/ui/card";
 import {
@@ -20,9 +18,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import Link from "next/link";
+import { MemberSearch } from "@/components/members/member-search";
 
 export const dynamic = "force-dynamic";
 
@@ -46,10 +44,29 @@ function formatEmployment(type: string): string {
     .join(" ");
 }
 
-export default async function MembersPage() {
+export default async function MembersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}) {
+  const { q, status } = await searchParams;
+
+  const where: Record<string, unknown> = {};
+  if (q) {
+    where.OR = [
+      { firstName: { contains: q, mode: "insensitive" } },
+      { lastName: { contains: q, mode: "insensitive" } },
+      { membershipNumber: { contains: q, mode: "insensitive" } },
+    ];
+  }
+  if (status && status !== "ALL") {
+    where.membershipStatus = status;
+  }
+
   const members = await prisma.member.findMany({
     take: 50,
     orderBy: { lastName: "asc" },
+    where,
     include: {
       creditScores: {
         take: 1,
@@ -70,34 +87,14 @@ export default async function MembersPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search members..."
-            className="pl-9"
-            readOnly
-          />
-        </div>
-        <div className="flex gap-2">
-          <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 cursor-pointer">
-            Active
-          </Badge>
-          <Badge variant="outline" className="cursor-pointer">
-            Inactive
-          </Badge>
-          <Badge variant="outline" className="cursor-pointer">
-            Terminated
-          </Badge>
-        </div>
-      </div>
+      <MemberSearch currentQuery={q ?? ""} currentStatus={status ?? "ALL"} />
 
       {/* Members Table */}
       <Card>
         <CardContent className="pt-6">
           {members.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
-              No members found.
+              No members found{q ? ` matching "${q}"` : ""}.
             </p>
           ) : (
             <Table>

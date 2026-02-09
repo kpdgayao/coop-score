@@ -19,8 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, Search } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const LOAN_TYPES = [
   { value: "MICRO", label: "Micro" },
@@ -31,20 +32,87 @@ const LOAN_TYPES = [
   { value: "HOUSING", label: "Housing" },
 ];
 
+interface MemberResult {
+  id: string;
+  firstName: string;
+  lastName: string;
+  membershipNumber: string;
+}
+
 export default function NewLoanPage() {
+  const router = useRouter();
   const [loanType, setLoanType] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
+  const [selectedMember, setSelectedMember] = useState<MemberResult | null>(null);
+  const [memberResults, setMemberResults] = useState<MemberResult[]>([]);
+  const [searchingMembers, setSearchingMembers] = useState(false);
   const [principalAmount, setPrincipalAmount] = useState("");
-  const [interestRate, setInterestRate] = useState("");
-  const [termMonths, setTermMonths] = useState("");
+  const [interestRate, setInterestRate] = useState("2.0");
+  const [termMonths, setTermMonths] = useState("12");
   const [purpose, setPurpose] = useState("");
-  const [maturityDate, setMaturityDate] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const searchMembers = async (q: string) => {
+    setMemberSearch(q);
+    setSelectedMember(null);
+    if (q.length < 2) {
+      setMemberResults([]);
+      return;
+    }
+    setSearchingMembers(true);
+    try {
+      const res = await fetch(`/api/members?q=${encodeURIComponent(q)}&limit=5`);
+      if (res.ok) {
+        const data = await res.json();
+        setMemberResults(data);
+      }
+    } catch {
+      // ignore
+    }
+    setSearchingMembers(false);
+  };
+
+  const selectMember = (member: MemberResult) => {
+    setSelectedMember(member);
+    setMemberSearch(`${member.firstName} ${member.lastName} (${member.membershipNumber})`);
+    setMemberResults([]);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(
-      "Loan application submitted! (This is a placeholder - submission logic not yet implemented.)"
-    );
+    if (!selectedMember) {
+      setError("Please select a member from the search results.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/loans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberId: selectedMember.id,
+          loanType,
+          principalAmount: parseFloat(principalAmount),
+          interestRate: parseFloat(interestRate) / 100,
+          termMonths: parseInt(termMonths),
+          purpose,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to submit");
+      }
+
+      const loan = await res.json();
+      router.push(`/loans/${loan.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit loan application.");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -80,16 +148,42 @@ export default function NewLoanPage() {
             {/* Member Search */}
             <div className="space-y-2">
               <Label htmlFor="member">Member</Label>
-              <Input
-                id="member"
-                placeholder="Search member by name or membership number..."
-                value={memberSearch}
-                onChange={(e) => setMemberSearch(e.target.value)}
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Start typing to search for a cooperative member
-              </p>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="member"
+                  placeholder="Search member by name or membership number..."
+                  value={memberSearch}
+                  onChange={(e) => searchMembers(e.target.value)}
+                  className="pl-9"
+                  required
+                />
+              </div>
+              {/* Search Results Dropdown */}
+              {memberResults.length > 0 && !selectedMember && (
+                <div className="border rounded-lg shadow-sm bg-white divide-y">
+                  {memberResults.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => selectMember(m)}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex justify-between items-center"
+                    >
+                      <span className="font-medium">{m.lastName}, {m.firstName}</span>
+                      <span className="text-muted-foreground font-mono text-xs">{m.membershipNumber}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedMember && (
+                <p className="text-xs text-emerald-600 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  Selected: {selectedMember.firstName} {selectedMember.lastName} ({selectedMember.membershipNumber})
+                </p>
+              )}
+              {searchingMembers && (
+                <p className="text-xs text-muted-foreground">Searching...</p>
+              )}
             </div>
 
             {/* Loan Type */}
@@ -129,7 +223,7 @@ export default function NewLoanPage() {
                 <Input
                   id="interestRate"
                   type="number"
-                  placeholder="0.00"
+                  placeholder="2.0"
                   min="0"
                   max="100"
                   step="0.01"
@@ -140,31 +234,19 @@ export default function NewLoanPage() {
               </div>
             </div>
 
-            {/* Term and Maturity Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="termMonths">Term (Months)</Label>
-                <Input
-                  id="termMonths"
-                  type="number"
-                  placeholder="12"
-                  min="1"
-                  max="360"
-                  value={termMonths}
-                  onChange={(e) => setTermMonths(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maturityDate">Maturity Date</Label>
-                <Input
-                  id="maturityDate"
-                  type="date"
-                  value={maturityDate}
-                  onChange={(e) => setMaturityDate(e.target.value)}
-                  required
-                />
-              </div>
+            {/* Term */}
+            <div className="space-y-2">
+              <Label htmlFor="termMonths">Term (Months)</Label>
+              <Input
+                id="termMonths"
+                type="number"
+                placeholder="12"
+                min="1"
+                max="360"
+                value={termMonths}
+                onChange={(e) => setTermMonths(e.target.value)}
+                required
+              />
             </div>
 
             {/* Purpose */}
@@ -180,9 +262,18 @@ export default function NewLoanPage() {
               />
             </div>
 
+            {error && (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
+
             {/* Actions */}
             <div className="flex items-center gap-3 pt-4">
-              <Button type="submit">Submit Application</Button>
+              <Button type="submit" disabled={submitting || !selectedMember}>
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : null}
+                {submitting ? "Submitting..." : "Submit Application"}
+              </Button>
               <Link href="/loans">
                 <Button type="button" variant="outline">
                   Cancel
