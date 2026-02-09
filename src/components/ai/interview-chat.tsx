@@ -196,25 +196,25 @@ export function InterviewChat({
         {/* Messages */}
         <ScrollArea className="flex-1 p-4" ref={scrollRef}>
           {!started ? (
-            <div className="flex flex-col items-center justify-center h-full py-12 text-center">
-              <MessageCircle className="h-12 w-12 text-muted-foreground/30 mb-4" />
-              <p className="text-muted-foreground text-sm mb-6">
+            <div className="flex flex-col items-center py-6 text-center">
+              <MessageCircle className="h-10 w-10 text-muted-foreground/30 mb-3" />
+              <p className="text-muted-foreground text-sm mb-4">
                 Start a guided loan interview with the applicant.
                 <br />
                 The AI will cover 5 required topics in depth for assessment.
               </p>
 
               {/* Language Picker */}
-              <div className="w-full max-w-sm mb-6">
-                <p className="text-sm font-medium mb-3">Interview Language</p>
-                <div className="grid gap-2">
+              <div className="w-full max-w-sm mb-4">
+                <p className="text-sm font-medium mb-2">Interview Language</p>
+                <div className="grid gap-1.5">
                   {LANGUAGE_OPTIONS.map((lang) => (
                     <button
                       key={lang.value}
                       type="button"
                       onClick={() => setLanguage(lang.value)}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-lg border text-left transition-colors min-h-[44px]",
+                        "flex items-center gap-3 px-3 py-2 rounded-lg border text-left transition-colors min-h-[40px]",
                         language === lang.value
                           ? "border-brand bg-brand/5 ring-1 ring-brand/20"
                           : "border-border hover:bg-muted/50"
