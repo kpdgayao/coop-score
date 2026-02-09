@@ -273,6 +273,7 @@ export async function startInterview(
           role: "assistant",
           content: firstMessage,
           timestamp: now.toISOString(),
+          language,
         },
       ],
       topicsCovered: [],
@@ -336,7 +337,11 @@ export async function continueInterview(
       role: string;
       content: string;
       timestamp: string;
+      language?: string;
     }>;
+
+    // Read the language from the first transcript entry (stored at interview start)
+    const language = (transcript[0]?.language as InterviewLanguage) || "english";
 
     // Add user message to transcript
     const now = new Date();
@@ -351,10 +356,6 @@ export async function continueInterview(
     const allTopicsCovered = REQUIRED_TOPICS.every((t) =>
       topicsCovered.includes(t)
     );
-
-    // Detect the interview language from the first message in the transcript
-    // (the system prompt language is embedded in the greeting)
-    const language = detectInterviewLanguage(transcript);
 
     // Build conversation messages for the AI
     const systemPrompt = buildInterviewSystemPrompt(
@@ -469,34 +470,6 @@ export async function continueInterview(
       topicsCovered: [],
     };
   }
-}
-
-/**
- * Detects the interview language from the transcript by checking the first AI message
- * for Bisaya or Filipino markers.
- */
-function detectInterviewLanguage(
-  transcript: Array<{ role: string; content: string }>
-): InterviewLanguage {
-  const firstAiMessage = transcript.find((m) => m.role === "assistant");
-  if (!firstAiMessage) return "english";
-
-  const text = firstAiMessage.content.toLowerCase();
-  const bisayaMarkers = [
-    "maayong", "kumusta", "lingkod", "unsay", "unsa", "nganong",
-    "palihog", "salamat", "buntag", "hapon", "gabii",
-  ];
-  const filipinoMarkers = [
-    "magandang", "kumusta", "mabuhay", "po", "opo",
-    "salamat po", "umaga", "hapon", "gabi",
-  ];
-
-  const bisayaHits = bisayaMarkers.filter((m) => text.includes(m)).length;
-  const filipinoHits = filipinoMarkers.filter((m) => text.includes(m)).length;
-
-  if (bisayaHits > filipinoHits && bisayaHits >= 2) return "bisaya";
-  if (filipinoHits > bisayaHits && filipinoHits >= 2) return "filipino";
-  return "english";
 }
 
 /**
