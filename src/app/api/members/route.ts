@@ -26,6 +26,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = CreateMemberSchema.parse(body);
 
+    // Check for duplicate: same first name + last name + date of birth
+    const existing = await prisma.member.findFirst({
+      where: {
+        firstName: { equals: data.firstName, mode: "insensitive" },
+        lastName: { equals: data.lastName, mode: "insensitive" },
+        dateOfBirth: new Date(data.dateOfBirth),
+      },
+      select: { id: true, membershipNumber: true },
+    });
+
+    if (existing) {
+      return NextResponse.json(
+        {
+          error: `A member with the same name and date of birth already exists (${existing.membershipNumber}).`,
+        },
+        { status: 409 }
+      );
+    }
+
     // Generate membership number: OIC-YYXXXX
     const year = new Date().getFullYear().toString().slice(2);
     let membershipNumber: string;
