@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { getRiskLabel } from "@/lib/format";
 
@@ -13,6 +13,22 @@ interface ScoreGaugeProps {
   showLabel?: boolean;
 }
 
+const RISK_COLORS: Record<string, string> = {
+  EXCELLENT: "#15803d",
+  GOOD: "#16a34a",
+  FAIR: "#f59e0b",
+  MARGINAL: "#f97316",
+  HIGH_RISK: "#ef4444",
+};
+
+const SEGMENT_COLORS = [
+  { stop: 0, color: "#ef4444" },      // High Risk
+  { stop: 0.27, color: "#f97316" },    // Marginal
+  { stop: 0.45, color: "#f59e0b" },    // Fair
+  { stop: 0.64, color: "#16a34a" },    // Good
+  { stop: 1, color: "#15803d" },       // Excellent
+];
+
 export function ScoreGauge({
   score,
   maxScore = 850,
@@ -23,26 +39,23 @@ export function ScoreGauge({
 }: ScoreGaugeProps) {
   const range = maxScore - minScore;
   const targetNormalized = Math.max(0, Math.min(1, (score - minScore) / range));
-  const strokeWidth = size === "sm" ? 8 : size === "md" ? 10 : 14;
 
-  // Animation state
   const [animatedNormalized, setAnimatedNormalized] = useState(0);
   const [displayScore, setDisplayScore] = useState(minScore);
+  const arcRef = useRef<SVGCircleElement>(null);
 
+  // Animate the score number with requestAnimationFrame
   useEffect(() => {
     const duration = 1200;
     const startTime = performance.now();
-    const startNorm = 0;
-    const startScore = minScore;
 
     function animate(now: number) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
 
-      setAnimatedNormalized(startNorm + (targetNormalized - startNorm) * eased);
-      setDisplayScore(Math.round(startScore + (score - startScore) * eased));
+      setAnimatedNormalized(eased * targetNormalized);
+      setDisplayScore(Math.round(minScore + (score - minScore) * eased));
 
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -52,149 +65,155 @@ export function ScoreGauge({
     requestAnimationFrame(animate);
   }, [score, minScore, targetNormalized]);
 
-  const labelSize = { sm: "text-xs", md: "text-sm", lg: "text-base" };
-  const fontSizes = { sm: 28, md: 38, lg: 48 };
-
-  const dimensions = {
-    sm: { width: 140, height: 95 },
-    md: { width: 200, height: 130 },
-    lg: { width: 280, height: 180 },
+  const dims = {
+    sm: { svgSize: 120, stroke: 10, fontSize: 24, labelSize: "text-xs" as const },
+    md: { svgSize: 180, stroke: 14, fontSize: 34, labelSize: "text-sm" as const },
+    lg: { svgSize: 240, stroke: 18, fontSize: 44, labelSize: "text-base" as const },
   };
 
-  const dim = dimensions[size];
-  // Needle dot dimensions
-  const dotRadius = strokeWidth * 0.6;
-  const dotBorder = 2;
-  // Pad the viewBox to contain the needle dot at any arc position
-  const pad = Math.ceil(dotRadius + dotBorder);
+  const d = dims[size];
+  const center = d.svgSize / 2;
+  const radius = center - d.stroke / 2 - 2; // 2px safety margin
+  const circumference = 2 * Math.PI * radius;
+  const arcLength = circumference * 0.75; // 270 degrees
+  const dashArray = `${arcLength} ${circumference}`;
+  const trackOffset = 0;
+  const scoreOffset = arcLength - animatedNormalized * arcLength;
 
-  // Drawing coordinates use the padded coordinate space
-  const cx = dim.width / 2 + pad;
-  const cy = dim.height - 18 + pad;
-  const r = dim.width / 2 - strokeWidth / 2;
+  const gaugeColor = RISK_COLORS[riskCategory] ?? "#94a3b8";
 
-  const leftX = cx - r;
-  const rightX = cx + r;
+  // Tick positions for min/max labels
+  // 270° arc starts at 135° (bottom-left) and ends at 45° (bottom-right)
+  const startAngleDeg = 135;
+  const endAngleDeg = 405; // 135 + 270
+  const startAngle = (startAngleDeg * Math.PI) / 180;
+  const endAngle = (endAngleDeg * Math.PI) / 180;
 
-  // Padded viewBox: content draws in a larger coordinate space,
-  // mapped to the same display size — prevents any overflow
-  const vbW = dim.width + pad * 2;
-  const vbH = dim.height + pad * 2;
+  const minLabelX = center + (radius + d.stroke / 2 + 10) * Math.cos(startAngle);
+  const minLabelY = center + (radius + d.stroke / 2 + 10) * Math.sin(startAngle);
+  const maxLabelX = center + (radius + d.stroke / 2 + 10) * Math.cos(endAngle);
+  const maxLabelY = center + (radius + d.stroke / 2 + 10) * Math.sin(endAngle);
 
-  // Segment boundaries (normalized: 0=300, 1=850)
-  const segments = [
-    { end: (449 - minScore) / range, color: "#ef4444" },   // High Risk: red
-    { end: (549 - minScore) / range, color: "#f97316" },   // Marginal: orange
-    { end: (649 - minScore) / range, color: "#f59e0b" },   // Fair: amber
-    { end: (749 - minScore) / range, color: "#16a34a" },   // Good: green
-    { end: 1, color: "#15803d" },                           // Excellent: emerald
-  ];
-
-  // Generate segment arcs
-  const segmentArcs = segments.map((seg, i) => {
-    const startNorm = i === 0 ? 0 : segments[i - 1].end;
-    const endNorm = seg.end;
-    const startAngle = Math.PI * (1 - startNorm);
-    const endAngle = Math.PI * (1 - endNorm);
-    const x1 = cx + r * Math.cos(startAngle);
-    const y1 = cy - r * Math.sin(startAngle);
-    const x2 = cx + r * Math.cos(endAngle);
-    const y2 = cy - r * Math.sin(endAngle);
-    const largeArc = endNorm - startNorm > 0.5 ? 1 : 0;
-    return {
-      d: `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`,
-      color: seg.color,
-    };
-  });
-
-  // Score endpoint
-  const scoreAngle = Math.PI * (1 - animatedNormalized);
-  const scoreX = cx + r * Math.cos(scoreAngle);
-  const scoreY = cy - r * Math.sin(scoreAngle);
-
-  const scoreArc = animatedNormalized > 0.005
-    ? `M ${leftX} ${cy} A ${r} ${r} 0 ${animatedNormalized > 0.5 ? 1 : 0} 1 ${scoreX} ${scoreY}`
-    : "";
-
-  const getGaugeColor = () => {
-    switch (riskCategory) {
-      case "EXCELLENT": return "#15803d";
-      case "GOOD": return "#16a34a";
-      case "FAIR": return "#f59e0b";
-      case "MARGINAL": return "#f97316";
-      case "HIGH_RISK": return "#ef4444";
-      default: return "#94a3b8";
-    }
-  };
+  // Needle dot position
+  const needleAngle = startAngle + animatedNormalized * (endAngle - startAngle);
+  const needleX = center + radius * Math.cos(needleAngle);
+  const needleY = center + radius * Math.sin(needleAngle);
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={dim.width} height={dim.height} viewBox={`0 0 ${vbW} ${vbH}`}>
-        {/* Background colored segments — butt caps to avoid tangent overflow */}
-        {segmentArcs.map((seg, i) => (
-          <path
-            key={i}
-            d={seg.d}
-            fill="none"
-            stroke={seg.color}
-            strokeWidth={strokeWidth}
-            strokeLinecap="butt"
-            opacity={0.15}
-          />
-        ))}
-        {/* Round caps for background track endpoints (circles, not linecaps) */}
-        <circle cx={leftX} cy={cy} r={strokeWidth / 2} fill={segments[0].color} opacity={0.15} />
-        <circle cx={rightX} cy={cy} r={strokeWidth / 2} fill={segments[segments.length - 1].color} opacity={0.15} />
-
-        {/* Score arc — butt cap, no tangent-dependent overflow */}
-        {scoreArc && (
-          <path
-            d={scoreArc}
-            fill="none"
-            stroke={getGaugeColor()}
-            strokeWidth={strokeWidth}
-            strokeLinecap="butt"
-          />
-        )}
-        {/* Round start cap for score arc */}
-        {animatedNormalized > 0.005 && (
-          <circle cx={leftX} cy={cy} r={strokeWidth / 2} fill={getGaugeColor()} />
-        )}
-        {/* Needle dot at score endpoint */}
-        {animatedNormalized > 0.005 && (
-          <circle
-            cx={scoreX}
-            cy={scoreY}
-            r={dotRadius}
-            fill={getGaugeColor()}
-            stroke="white"
-            strokeWidth={dotBorder}
-          />
-        )}
-        {/* Score text */}
-        <text
-          x={cx}
-          y={cy - r * 0.3}
-          textAnchor="middle"
-          fill={getGaugeColor()}
-          fontSize={fontSizes[size]}
-          fontWeight="bold"
+      <div className="relative" style={{ width: d.svgSize, height: d.svgSize }}>
+        <svg
+          width={d.svgSize}
+          height={d.svgSize}
+          viewBox={`0 0 ${d.svgSize} ${d.svgSize}`}
         >
-          {displayScore}
-        </text>
-        {/* Min/Max labels */}
-        <text x={leftX} y={cy + 15} fontSize="10" fill="#94a3b8" textAnchor="middle">
-          {minScore}
-        </text>
-        <text x={rightX} y={cy + 15} fontSize="10" fill="#94a3b8" textAnchor="middle">
-          {maxScore}
-        </text>
-      </svg>
+          <defs>
+            {/* Gradient that follows the arc color segments */}
+            <linearGradient id={`gaugeGradient-${size}`} x1="0" y1="1" x2="1" y2="0">
+              {SEGMENT_COLORS.map((seg, i) => (
+                <stop key={i} offset={`${seg.stop * 100}%`} stopColor={seg.color} stopOpacity={0.15} />
+              ))}
+            </linearGradient>
+          </defs>
+
+          {/* Background track (270° arc) */}
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={`url(#gaugeGradient-${size})`}
+            strokeWidth={d.stroke}
+            strokeDasharray={dashArray}
+            strokeDashoffset={trackOffset}
+            strokeLinecap="round"
+            transform={`rotate(135 ${center} ${center})`}
+          />
+
+          {/* Score fill arc */}
+          <circle
+            ref={arcRef}
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={gaugeColor}
+            strokeWidth={d.stroke}
+            strokeDasharray={dashArray}
+            strokeDashoffset={scoreOffset}
+            strokeLinecap="round"
+            transform={`rotate(135 ${center} ${center})`}
+          />
+
+          {/* Needle dot */}
+          {animatedNormalized > 0.005 && (
+            <circle
+              cx={needleX}
+              cy={needleY}
+              r={d.stroke * 0.45}
+              fill="white"
+              stroke={gaugeColor}
+              strokeWidth={2.5}
+            />
+          )}
+
+          {/* Score number */}
+          <text
+            x={center}
+            y={center - 2}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill={gaugeColor}
+            fontSize={d.fontSize}
+            fontWeight="bold"
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
+            {displayScore}
+          </text>
+
+          {/* "out of" label */}
+          <text
+            x={center}
+            y={center + d.fontSize * 0.55}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="#94a3b8"
+            fontSize={d.fontSize * 0.28}
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
+            out of {maxScore}
+          </text>
+
+          {/* Min label */}
+          <text
+            x={minLabelX}
+            y={minLabelY}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="#94a3b8"
+            fontSize={9}
+          >
+            {minScore}
+          </text>
+
+          {/* Max label */}
+          <text
+            x={maxLabelX}
+            y={maxLabelY}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="#94a3b8"
+            fontSize={9}
+          >
+            {maxScore}
+          </text>
+        </svg>
+      </div>
       {showLabel && (
         <span
           className={cn(
             "font-semibold mt-1 px-3 py-0.5 rounded-full",
-            labelSize[size],
+            d.labelSize,
             riskCategory === "EXCELLENT" && "bg-emerald-100 text-emerald-800",
             riskCategory === "GOOD" && "bg-green-100 text-green-800",
             riskCategory === "FAIR" && "bg-amber-100 text-amber-800",
