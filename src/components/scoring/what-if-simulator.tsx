@@ -101,7 +101,7 @@ export function WhatIfSimulator({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="h-5 w-5 text-teal" />
+          <Sparkles className="h-5 w-5 text-brand" />
           What-If Score Simulator
         </CardTitle>
       </CardHeader>
@@ -149,7 +149,7 @@ export function WhatIfSimulator({
               </div>
             ))}
 
-            <Button onClick={runSimulation} disabled={loading} className="w-full bg-teal hover:bg-teal-light text-white">
+            <Button onClick={runSimulation} disabled={loading} className="w-full bg-brand hover:bg-brand-light text-white">
               {loading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
@@ -166,8 +166,8 @@ export function WhatIfSimulator({
         {coaching && (
           <div className="space-y-4 pt-4 border-t">
             {/* Coaching Message */}
-            <div className="p-4 bg-teal/5 rounded-lg border border-teal/20">
-              <h4 className="text-sm font-medium flex items-center gap-1.5 mb-2 text-teal">
+            <div className="p-4 bg-brand/5 rounded-lg border border-brand/20">
+              <h4 className="text-sm font-medium flex items-center gap-1.5 mb-2 text-brand">
                 <Sparkles className="h-4 w-4" />
                 AI Coach Says
               </h4>

@@ -27,8 +27,8 @@ const REPORTS = [
     description:
       "Examine how credit scores distribute across different membership tenure groups to identify scoring patterns and model calibration.",
     icon: BarChart3,
-    iconColor: "text-blue-500",
-    bgColor: "bg-blue-50",
+    iconColor: "text-green-700",
+    bgColor: "bg-green-50",
   },
   {
     title: "Engagement vs Default Correlation",

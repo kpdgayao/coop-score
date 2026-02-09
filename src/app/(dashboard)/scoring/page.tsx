@@ -35,9 +35,9 @@ const RISK_CATEGORIES = [
     key: "GOOD",
     label: "Good",
     range: "650-749",
-    color: "bg-teal-500",
-    bgColor: "bg-teal-50 border-teal-200",
-    textColor: "text-teal-700",
+    color: "bg-green-600",
+    bgColor: "bg-green-50 border-green-200",
+    textColor: "text-green-700",
   },
   {
     key: "FAIR",

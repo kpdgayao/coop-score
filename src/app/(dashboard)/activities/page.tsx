@@ -32,7 +32,7 @@ function getActivityTypeColor(type: string): string {
     case "COMMUNITY_SERVICE":
       return "bg-emerald-100 text-emerald-800";
     case "VOLUNTEER":
-      return "bg-teal-100 text-teal-800";
+      return "bg-green-100 text-green-800";
     case "ELECTION":
       return "bg-amber-100 text-amber-800";
     default:
@@ -100,7 +100,7 @@ export default async function ActivitiesPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Activities
             </CardTitle>
-            <Calendar className="h-5 w-5 text-blue-500" />
+            <Calendar className="h-5 w-5 text-green-700" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{totalActivities}</div>

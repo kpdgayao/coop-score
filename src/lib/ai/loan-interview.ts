@@ -12,6 +12,9 @@ const FEATURE_NAME = "loan-interview";
 const COST_PER_INPUT_TOKEN = 0.000003;
 const COST_PER_OUTPUT_TOKEN = 0.000015;
 
+// Supported interview languages
+export type InterviewLanguage = "english" | "bisaya" | "filipino";
+
 // Required topics that must be covered before interview is considered complete
 const REQUIRED_TOPICS = [
   "business_plan",
@@ -23,28 +26,86 @@ const REQUIRED_TOPICS = [
 
 type InterviewTopic = (typeof REQUIRED_TOPICS)[number];
 
+// Minimum number of transcript messages that specifically mention a topic
+// before it's considered "deeply covered" (not just surface-level keyword hit)
+const MIN_TOPIC_DEPTH = 3;
+
+// Minimum total transcript messages before interview can complete (~8 exchanges)
+const MIN_TRANSCRIPT_LENGTH = 16;
+
 // Keywords/phrases that indicate a topic has been discussed
+// Includes English, Filipino, and Bisaya indicators
 const TOPIC_INDICATORS: Record<InterviewTopic, string[]> = {
   business_plan: [
+    // English
     "business", "livelihood", "plan", "income source", "sell", "buy",
-    "product", "service", "customer", "market", "negosyo", "hanapbuhay",
+    "product", "service", "customer", "market", "revenue", "sales",
+    "supplier", "inventory", "profit margin", "operate", "grow",
+    // Filipino
+    "negosyo", "hanapbuhay", "paninda", "kita", "benta",
+    // Bisaya
+    "negosyante", "panginabuhian", "baligya", "palit", "suki",
+    "tindahan", "merkado", "ganansya", "puhunan", "kargamento",
   ],
   loan_terms_understanding: [
+    // English
     "interest", "rate", "repayment", "monthly payment", "amortization",
-    "term", "maturity", "penalty", "due date", "bayad", "hulog",
+    "term", "maturity", "penalty", "due date", "balance", "principal",
+    "schedule", "installment", "overdue",
+    // Filipino
+    "bayad", "hulog", "tubo", "interes", "multa", "takdang araw",
+    // Bisaya
+    "bayad", "hulog", "tubo", "interes", "multa", "utang",
+    "bulanan", "bayrunon", "plete", "singil", "pautang",
   ],
   household_finances: [
+    // English
     "household", "expense", "family", "dependent", "budget", "income",
-    "salary", "gastos", "pamilya", "anak", "asawa", "rent", "utilities",
+    "salary", "rent", "utilities", "food", "education", "medical",
+    "savings", "other income", "spouse", "children",
+    // Filipino
+    "gastos", "pamilya", "anak", "asawa", "sahod", "upa", "kuryente",
+    "tubig", "pagkain", "paaralan",
+    // Bisaya
+    "gasto", "pamilya", "anak", "asawa", "sweldo", "abang",
+    "kuryente", "tubig", "pagkaon", "eskwela", "tambal", "panimalay",
+    "kinahanglan", "inadlaw", "tinipigan",
   ],
   purpose_feasibility: [
+    // English
     "plan", "how will you use", "feasible", "realistic", "expect",
-    "profit", "return", "payback", "succeed", "risk",
+    "profit", "return", "payback", "succeed", "risk", "timeline",
+    "when", "how long", "goal", "result", "outcome",
+    // Filipino
+    "plano", "gagamitin", "inaasahan", "kita", "balik",
+    // Bisaya
+    "plano", "gamiton", "magamit", "ganansya", "balik",
+    "tuyo", "padulngan", "target", "resulta", "panahon",
   ],
   cooperative_obligations: [
+    // English
     "cbu", "share capital", "general assembly", "attendance", "guarantor",
     "training", "seminar", "cooperative", "obligation", "pmes",
+    "member duties", "co-maker", "proxy",
+    // Filipino
+    "kapital", "pulong", "pagsasanay", "tungkulin", "kooperatiba",
+    // Bisaya
+    "kapital", "miting", "tigum", "obligasyon", "kooperatiba",
+    "tulunganay", "guarantor", "training", "pulong",
+    "kauban", "miyembro", "katungdanan",
   ],
+};
+
+const LANGUAGE_INSTRUCTIONS: Record<InterviewLanguage, string> = {
+  english: `Conduct this interview in English. Use simple, clear English appropriate for applicants who may not be financially sophisticated.`,
+  bisaya: `Conduct this interview primarily in Bisaya (Cebuano). The applicant is most comfortable speaking Bisaya.
+Use natural conversational Bisaya as spoken in Cagayan de Oro.
+You may use common English terms for financial concepts (e.g., "interest", "loan", "business") when there's no common Bisaya equivalent, as this reflects natural Bisaya-English code-switching in CDO.
+If the applicant responds in English, you may naturally switch to English but default back to Bisaya.
+Example greetings: "Maayong buntag!", "Kumusta ka?", "Lingkod lang."`,
+  filipino: `Conduct this interview primarily in Filipino (Tagalog). The applicant is most comfortable speaking Filipino.
+You may use common English terms for financial concepts when natural (Taglish is fine).
+If the applicant responds in another language, you may adapt.`,
 };
 
 function buildInterviewSystemPrompt(
@@ -57,7 +118,8 @@ function buildInterviewSystemPrompt(
   loan: {
     principalAmount: number;
     purpose: string;
-  }
+  },
+  language: InterviewLanguage = "english"
 ): string {
   const tenureMonths = Math.floor(
     (Date.now() - member.membershipDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
@@ -65,21 +127,25 @@ function buildInterviewSystemPrompt(
 
   return `You are a friendly and professional loan counselor at Oro Integrated Cooperative in the Philippines. You are conducting a structured loan interview with a cooperative member who is applying for a micro-loan.
 
-Your goals:
-1. Understand their business/livelihood plan in detail
-2. Assess their understanding of loan terms (interest, repayment schedule)
-3. Understand their household financial situation (income sources, expenses, dependents)
-4. Evaluate the feasibility of their loan purpose
-5. Check their awareness of cooperative obligations (CBU, GA attendance, guarantors)
+Language: ${LANGUAGE_INSTRUCTIONS[language]}
+
+Your goals — you must cover ALL 5 of these topics thoroughly:
+1. Business/livelihood plan: Understand their business or livelihood in DETAIL — what they do, how they earn, who their customers are, how they plan to grow
+2. Loan terms understanding: Assess whether they understand interest rates, repayment schedules, penalties, and what happens if they miss payments
+3. Household finances: Understand their full financial picture — income sources, monthly expenses, dependents, savings, other debts
+4. Purpose feasibility: Evaluate whether their loan purpose is realistic and well-thought-out — ask follow-up questions to probe deeper
+5. Cooperative obligations: Check their awareness of CBU contributions, GA attendance requirements, guarantor obligations, and PMES trainings
 
 Rules:
 - Be warm, respectful, and encouraging — this is a cooperative, not a bank
-- Use simple language; many applicants may not be financially sophisticated
-- Ask one question at a time
+- Use simple language appropriate for the chosen interview language
+- Ask ONE question at a time — do not bundle multiple questions
+- Ask probing FOLLOW-UP questions — do not accept vague or surface-level answers. If someone says "I sell food", ask what kind of food, how much they sell per day, who their customers are, etc.
 - Do not make approval/denial decisions — you are gathering information only
 - If the applicant seems confused about loan terms, gently explain them
-- Cover ALL 5 required topics before concluding
-- When all topics are covered, thank them and let them know the credit committee will review their application
+- Cover ALL 5 required topics thoroughly before concluding — spend at least 2-3 questions per topic
+- The interview should feel like a natural conversation, not an interrogation
+- When all topics are deeply covered, thank them and let them know the credit committee will review their application
 - Keep responses concise (2-4 sentences max per turn)
 
 Member Context:
@@ -93,7 +159,7 @@ Member Context:
 function buildAssessmentPrompt(
   transcript: Array<{ role: string; content: string; timestamp: string }>
 ): string {
-  return `Analyze the following loan interview transcript and generate a structured credit assessment. The interview was conducted with a micro-loan applicant at a Philippine cooperative.
+  return `Analyze the following loan interview transcript and generate a structured credit assessment. The interview was conducted with a micro-loan applicant at a Philippine cooperative. The interview may be in English, Filipino, or Bisaya — evaluate the content regardless of language.
 
 Transcript:
 ${JSON.stringify(transcript, null, 2)}
@@ -110,32 +176,38 @@ Return ONLY a JSON object with:
 - financial_literacy_score (number 0-100)
 - business_viability_score (number 0-100)
 - coherence_score (number 0-100)
-- risk_flags (string[] - list of any concerns)
-- summary (string - concise assessment summary)
-- recommendation (string - brief recommendation for the credit committee)
+- risk_flags (string[] - list of any concerns, always in English)
+- summary (string - concise assessment summary, always in English)
+- recommendation (string - brief recommendation for the credit committee, always in English)
 
 Do NOT include any text outside the JSON object.`;
 }
 
 /**
  * Detects which interview topics have been covered based on the conversation transcript.
+ * A topic requires at least MIN_TOPIC_DEPTH keyword hits across multiple messages
+ * to be considered "deeply covered".
  */
 function detectTopicsCovered(
   transcript: Array<{ role: string; content: string }>
 ): string[] {
-  const allText = transcript
-    .map((msg) => msg.content.toLowerCase())
-    .join(" ");
-
   const coveredTopics: string[] = [];
 
   for (const topic of REQUIRED_TOPICS) {
     const indicators = TOPIC_INDICATORS[topic];
-    const matchCount = indicators.filter((keyword) =>
-      allText.includes(keyword.toLowerCase())
-    ).length;
-    // Consider a topic covered if at least 2 indicators are found
-    if (matchCount >= 2) {
+    // Count how many distinct messages contain at least one indicator for this topic
+    let messagesWithTopic = 0;
+    for (const msg of transcript) {
+      const text = msg.content.toLowerCase();
+      const hasIndicator = indicators.some((keyword) =>
+        text.includes(keyword.toLowerCase())
+      );
+      if (hasIndicator) {
+        messagesWithTopic++;
+      }
+    }
+    // Topic is covered if indicators appear in at least MIN_TOPIC_DEPTH messages
+    if (messagesWithTopic >= MIN_TOPIC_DEPTH) {
       coveredTopics.push(topic);
     }
   }
@@ -149,7 +221,8 @@ function detectTopicsCovered(
  */
 export async function startInterview(
   loanId: string,
-  conductedById: string
+  conductedById: string,
+  language: InterviewLanguage = "english"
 ): Promise<{ interviewId: string; firstMessage: string }> {
   // Query loan with member data
   const loan = await prisma.loan.findUnique({
@@ -161,16 +234,28 @@ export async function startInterview(
     throw new Error(`Loan not found: ${loanId}`);
   }
 
-  const systemPrompt = buildInterviewSystemPrompt(loan.member, {
-    principalAmount: Number(loan.principalAmount),
-    purpose: loan.purpose,
-  });
+  const systemPrompt = buildInterviewSystemPrompt(
+    loan.member,
+    {
+      principalAmount: Number(loan.principalAmount),
+      purpose: loan.purpose,
+    },
+    language
+  );
+
+  const greetingInstruction = {
+    english:
+      "The member has just sat down for their loan interview. Please greet them warmly in English and begin with your first question.",
+    bisaya:
+      "The member has just sat down for their loan interview. Please greet them warmly in Bisaya (as spoken in Cagayan de Oro) and begin with your first question. Use natural conversational Bisaya.",
+    filipino:
+      "The member has just sat down for their loan interview. Please greet them warmly in Filipino and begin with your first question.",
+  }[language];
 
   // Generate first AI message (greeting)
   const aiResponse = await callAI({
     systemPrompt,
-    userPrompt:
-      "The member has just sat down for their loan interview. Please greet them warmly and begin with your first question.",
+    userPrompt: greetingInstruction,
     temperature: 0.5,
   });
 
@@ -267,21 +352,32 @@ export async function continueInterview(
       topicsCovered.includes(t)
     );
 
+    // Detect the interview language from the first message in the transcript
+    // (the system prompt language is embedded in the greeting)
+    const language = detectInterviewLanguage(transcript);
+
     // Build conversation messages for the AI
-    const systemPrompt = buildInterviewSystemPrompt(interview.member, {
-      principalAmount: Number(interview.loan.principalAmount),
-      purpose: interview.loan.purpose,
-    });
+    const systemPrompt = buildInterviewSystemPrompt(
+      interview.member,
+      {
+        principalAmount: Number(interview.loan.principalAmount),
+        purpose: interview.loan.purpose,
+      },
+      language
+    );
 
     // Add topic coverage context to the user prompt
     let contextualPrompt = userMessage;
-    if (allTopicsCovered) {
-      contextualPrompt += "\n\n[System note: All required topics have been covered. You may wrap up the interview naturally.]";
+    if (allTopicsCovered && transcript.length >= MIN_TRANSCRIPT_LENGTH) {
+      contextualPrompt += "\n\n[System note: All required topics have been thoroughly covered and the interview has sufficient depth. You may wrap up the interview naturally. Thank the applicant and let them know the credit committee will review.]";
+    } else if (allTopicsCovered) {
+      const remaining = MIN_TRANSCRIPT_LENGTH - transcript.length;
+      contextualPrompt += `\n\n[System note: All topics have been touched but the interview needs more depth (${remaining} more exchanges needed). Ask follow-up questions to dig deeper into the topics already covered — probe for specifics, numbers, and concrete details.]`;
     } else {
       const remaining = REQUIRED_TOPICS.filter(
         (t) => !topicsCovered.includes(t)
       );
-      contextualPrompt += `\n\n[System note: Topics still to cover: ${remaining.join(", ")}. Guide the conversation to address these.]`;
+      contextualPrompt += `\n\n[System note: Topics still needing deeper coverage: ${remaining.join(", ")}. Guide the conversation to address these. Remember to ask follow-up questions, not just surface-level ones.]`;
     }
 
     // Build the full conversation for context
@@ -305,8 +401,8 @@ export async function continueInterview(
     });
 
     // Check if interview should be marked as complete
-    // The interview is complete if all topics are covered AND the AI has wrapped up
-    const isComplete = allTopicsCovered && transcript.length >= 10; // minimum ~5 exchanges
+    // The interview is complete if all topics are deeply covered AND minimum depth is reached
+    const isComplete = allTopicsCovered && transcript.length >= MIN_TRANSCRIPT_LENGTH;
 
     // Update interview record
     await prisma.loanInterview.update({
@@ -376,6 +472,34 @@ export async function continueInterview(
 }
 
 /**
+ * Detects the interview language from the transcript by checking the first AI message
+ * for Bisaya or Filipino markers.
+ */
+function detectInterviewLanguage(
+  transcript: Array<{ role: string; content: string }>
+): InterviewLanguage {
+  const firstAiMessage = transcript.find((m) => m.role === "assistant");
+  if (!firstAiMessage) return "english";
+
+  const text = firstAiMessage.content.toLowerCase();
+  const bisayaMarkers = [
+    "maayong", "kumusta", "lingkod", "unsay", "unsa", "nganong",
+    "palihog", "salamat", "buntag", "hapon", "gabii",
+  ];
+  const filipinoMarkers = [
+    "magandang", "kumusta", "mabuhay", "po", "opo",
+    "salamat po", "umaga", "hapon", "gabi",
+  ];
+
+  const bisayaHits = bisayaMarkers.filter((m) => text.includes(m)).length;
+  const filipinoHits = filipinoMarkers.filter((m) => text.includes(m)).length;
+
+  if (bisayaHits > filipinoHits && bisayaHits >= 2) return "bisaya";
+  if (filipinoHits > bisayaHits && filipinoHits >= 2) return "filipino";
+  return "english";
+}
+
+/**
  * Generates a structured assessment from the completed interview transcript.
  * Returns null on AI failure (graceful degradation).
  */
@@ -405,7 +529,7 @@ export async function assessInterview(
       return null;
     }
 
-    const systemPrompt = `You are a senior credit analyst at a Philippine cooperative. You are reviewing a loan interview transcript to generate a structured assessment.`;
+    const systemPrompt = `You are a senior credit analyst at a Philippine cooperative. You are reviewing a loan interview transcript to generate a structured assessment. The interview may have been conducted in English, Filipino, or Bisaya — analyze the content regardless of language. Always write your assessment in English.`;
     const userPrompt = buildAssessmentPrompt(transcript);
 
     // Call AI for assessment

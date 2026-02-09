@@ -99,7 +99,7 @@ export default async function DashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Members
             </CardTitle>
-            <Users className="h-5 w-5 text-blue-500" />
+            <Users className="h-5 w-5 text-green-700" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{totalMembers.toLocaleString()}</div>
@@ -114,7 +114,7 @@ export default async function DashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Active Loans
             </CardTitle>
-            <FileText className="h-5 w-5 text-teal-500" />
+            <FileText className="h-5 w-5 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{activeLoans.toLocaleString()}</div>
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Average Credit Score
             </CardTitle>
-            <Calculator className="h-5 w-5 text-emerald-500" />
+            <Calculator className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{avgScore}</div>

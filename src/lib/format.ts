@@ -50,7 +50,7 @@ export function getRiskBgColor(category: string): string {
     case "EXCELLENT":
       return "bg-emerald-100 text-emerald-800";
     case "GOOD":
-      return "bg-teal-100 text-teal-800";
+      return "bg-green-100 text-green-800";
     case "FAIR":
       return "bg-amber-100 text-amber-800";
     case "MARGINAL":

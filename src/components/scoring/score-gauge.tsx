@@ -58,8 +58,8 @@ export function ScoreGauge({
 
   const getGaugeColor = () => {
     switch (riskCategory) {
-      case "EXCELLENT": return "#059669";
-      case "GOOD": return "#0d9488";
+      case "EXCELLENT": return "#15803d";
+      case "GOOD": return "#16a34a";
       case "FAIR": return "#f59e0b";
       case "MARGINAL": return "#f97316";
       case "HIGH_RISK": return "#ef4444";
@@ -114,7 +114,7 @@ export function ScoreGauge({
             "font-semibold mt-1 px-3 py-0.5 rounded-full",
             labelSize[size],
             riskCategory === "EXCELLENT" && "bg-emerald-100 text-emerald-800",
-            riskCategory === "GOOD" && "bg-teal-100 text-teal-800",
+            riskCategory === "GOOD" && "bg-green-100 text-green-800",
             riskCategory === "FAIR" && "bg-amber-100 text-amber-800",
             riskCategory === "MARGINAL" && "bg-orange-100 text-orange-800",
             riskCategory === "HIGH_RISK" && "bg-red-100 text-red-800"

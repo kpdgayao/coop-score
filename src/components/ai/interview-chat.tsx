@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, CheckCircle, Loader2 } from "lucide-react";
+import { MessageCircle, Send, CheckCircle, Loader2, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatMessage {
@@ -21,6 +21,14 @@ interface InterviewChatProps {
   memberName: string;
   interviewId?: string;
 }
+
+type InterviewLanguage = "english" | "bisaya" | "filipino";
+
+const LANGUAGE_OPTIONS: { value: InterviewLanguage; label: string; description: string }[] = [
+  { value: "english", label: "English", description: "Conduct interview in English" },
+  { value: "bisaya", label: "Bisaya", description: "Bisaya nga interview (CDO style)" },
+  { value: "filipino", label: "Filipino", description: "Filipino / Tagalog interview" },
+];
 
 const REQUIRED_TOPICS = [
   { id: "business_plan", label: "Business Plan" },
@@ -43,6 +51,7 @@ export function InterviewChat({
   const [topicsCovered, setTopicsCovered] = useState<string[]>([]);
   const [isComplete, setIsComplete] = useState(false);
   const [started, setStarted] = useState(false);
+  const [language, setLanguage] = useState<InterviewLanguage>("english");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,7 +66,7 @@ export function InterviewChat({
       const res = await fetch("/api/ai/loan-interview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ loanId, action: "start" }),
+        body: JSON.stringify({ loanId, action: "start", language }),
       });
       const data = await res.json();
       setInterviewId(data.interviewId);
@@ -70,11 +79,15 @@ export function InterviewChat({
       ]);
       setStarted(true);
     } catch {
-      // Fallback greeting
+      const fallbackGreetings: Record<InterviewLanguage, string> = {
+        english: `Good day! I'm here to have a friendly conversation with you about your loan application. This will help our credit committee better understand your needs. Let's start — could you tell me about your business or livelihood?`,
+        bisaya: `Maayong adlaw! Naa ko diri para makig-istorya nimo bahin sa imong loan application. Kini makatabang sa atong credit committee nga mas masabtan ang imong panginahanglan. Magsugod ta — mahimo ba nimong isulti nako ang imong negosyo o panginabuhian?`,
+        filipino: `Magandang araw! Nandito ako para makausap ka tungkol sa iyong loan application. Ito ay makakatulong sa ating credit committee na mas maintindihan ang iyong pangangailangan. Magsimula tayo — maaari mo bang ikuwento sa akin ang iyong negosyo o hanapbuhay?`,
+      };
       setMessages([
         {
           role: "assistant",
-          content: `Magandang araw! I'm here to have a friendly conversation with you about your loan application. This will help our credit committee better understand your needs. Let's start — could you tell me about your business or livelihood?`,
+          content: fallbackGreetings[language],
           timestamp: new Date(),
         },
       ]);
@@ -128,19 +141,32 @@ export function InterviewChat({
     setLoading(false);
   };
 
+  const selectedLang = LANGUAGE_OPTIONS.find((l) => l.value === language)!;
+
   return (
-    <Card className="flex flex-col h-[calc(100vh-10rem)] max-h-[600px] min-h-[400px]">
+    <Card className="flex flex-col h-[calc(100vh-10rem)] max-h-[700px] min-h-[400px]">
       <CardHeader className="pb-3 border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
-            <MessageCircle className="h-5 w-5 text-teal" />
+            <MessageCircle className="h-5 w-5 text-brand" />
             Loan Interview — {memberName}
           </CardTitle>
-          {started && (
-            <Badge variant={isComplete ? "default" : "secondary"}>
-              {isComplete ? "Complete" : "In Progress"}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {started && (
+              <Badge
+                variant="outline"
+                className="text-[11px] gap-1"
+              >
+                <Globe className="h-3 w-3" />
+                {selectedLang.label}
+              </Badge>
+            )}
+            {started && (
+              <Badge variant={isComplete ? "default" : "secondary"}>
+                {isComplete ? "Complete" : "In Progress"}
+              </Badge>
+            )}
+          </div>
         </div>
         {/* Topics progress */}
         {started && (
@@ -172,15 +198,55 @@ export function InterviewChat({
           {!started ? (
             <div className="flex flex-col items-center justify-center h-full py-12 text-center">
               <MessageCircle className="h-12 w-12 text-muted-foreground/30 mb-4" />
-              <p className="text-muted-foreground text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-6">
                 Start a guided loan interview with the applicant.
                 <br />
-                The AI will cover 5 required topics for assessment.
+                The AI will cover 5 required topics in depth for assessment.
               </p>
+
+              {/* Language Picker */}
+              <div className="w-full max-w-sm mb-6">
+                <p className="text-sm font-medium mb-3">Interview Language</p>
+                <div className="grid gap-2">
+                  {LANGUAGE_OPTIONS.map((lang) => (
+                    <button
+                      key={lang.value}
+                      type="button"
+                      onClick={() => setLanguage(lang.value)}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg border text-left transition-colors min-h-[44px]",
+                        language === lang.value
+                          ? "border-brand bg-brand/5 ring-1 ring-brand/20"
+                          : "border-border hover:bg-muted/50"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "h-4 w-4 rounded-full border-2 shrink-0 flex items-center justify-center",
+                          language === lang.value
+                            ? "border-brand"
+                            : "border-muted-foreground/40"
+                        )}
+                      >
+                        {language === lang.value && (
+                          <div className="h-2 w-2 rounded-full bg-brand" />
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">{lang.label}</span>
+                        <p className="text-xs text-muted-foreground">
+                          {lang.description}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <Button
                 onClick={startInterview}
                 disabled={loading}
-                className="bg-teal hover:bg-teal-light text-white"
+                className="bg-brand hover:bg-brand-light text-white"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -243,7 +309,7 @@ export function InterviewChat({
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
                 size="icon"
-                className="h-11 w-11 bg-teal hover:bg-teal-light text-white shrink-0"
+                className="h-11 w-11 bg-brand hover:bg-brand-light text-white shrink-0"
               >
                 <Send className="h-4 w-4" />
               </Button>

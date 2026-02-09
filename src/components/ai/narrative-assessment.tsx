@@ -28,7 +28,7 @@ export function NarrativeAssessment({ assessment }: NarrativeAssessmentProps) {
 
   const alignmentColor = {
     strong: "text-emerald-600",
-    moderate: "text-teal-600",
+    moderate: "text-green-700",
     weak: "text-amber-600",
     misaligned: "text-red-600",
   }[a.alignment_with_profile] || "text-muted-foreground";
@@ -38,7 +38,7 @@ export function NarrativeAssessment({ assessment }: NarrativeAssessmentProps) {
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Brain className="h-5 w-5 text-teal shrink-0" />
+            <Brain className="h-5 w-5 text-brand shrink-0" />
             AI Narrative Assessment
           </CardTitle>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -59,7 +59,7 @@ export function NarrativeAssessment({ assessment }: NarrativeAssessmentProps) {
               className="h-full rounded-full transition-all"
               style={{
                 width: `${a.score}%`,
-                backgroundColor: a.score >= 70 ? "#059669" : a.score >= 40 ? "#f59e0b" : "#ef4444",
+                backgroundColor: a.score >= 70 ? "#15803d" : a.score >= 40 ? "#f59e0b" : "#ef4444",
               }}
             />
           </div>

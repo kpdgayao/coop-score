@@ -41,7 +41,7 @@ const SCORE_RANGES = [
   {
     range: "650 - 749",
     category: "Good",
-    color: "bg-teal-100 text-teal-800",
+    color: "bg-green-100 text-green-800",
     description: "Reliable borrower, standard terms",
   },
   {
@@ -122,7 +122,7 @@ export default function SettingsPage() {
                       <div className="flex items-center justify-center gap-2">
                         <div className="h-2 w-16 sm:w-24 bg-muted rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-teal-500 rounded-full"
+                            className="h-full bg-green-600 rounded-full"
                             style={{ width: `${(thinFileWeight / 30) * 100}%` }}
                           />
                         </div>

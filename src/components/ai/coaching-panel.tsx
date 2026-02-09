@@ -31,7 +31,7 @@ export function CoachingPanel({ coaching }: CoachingPanelProps) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="h-5 w-5 text-teal" />
+          <Sparkles className="h-5 w-5 text-brand" />
           AI Score Coach
         </CardTitle>
       </CardHeader>
@@ -68,9 +68,9 @@ export function CoachingPanel({ coaching }: CoachingPanelProps) {
         </div>
 
         {/* Next Milestone */}
-        <div className="p-3 bg-teal/5 border border-teal/20 rounded-lg space-y-2">
+        <div className="p-3 bg-brand/5 border border-brand/20 rounded-lg space-y-2">
           <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-teal" />
+            <Target className="h-4 w-4 text-brand" />
             <h4 className="text-sm font-medium">
               Next Milestone: {c.next_milestone.target_tier}
             </h4>
@@ -81,7 +81,7 @@ export function CoachingPanel({ coaching }: CoachingPanelProps) {
             </span>
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-teal rounded-full transition-all"
+                className="h-full bg-brand rounded-full transition-all"
                 style={{
                   width: `${Math.min(100, Math.max(0, ((c.next_milestone.current_score - 300) / Math.max(1, c.next_milestone.target_score - 300)) * 100))}%`,
                 }}

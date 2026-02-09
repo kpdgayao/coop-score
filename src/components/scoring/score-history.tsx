@@ -37,8 +37,8 @@ export function ScoreHistory({ data }: ScoreHistoryProps) {
           ticks={[300, 450, 550, 650, 750, 850]}
         />
         {/* Tier boundaries */}
-        <ReferenceLine y={750} stroke="#059669" strokeDasharray="3 3" strokeOpacity={0.5} />
-        <ReferenceLine y={650} stroke="#0d9488" strokeDasharray="3 3" strokeOpacity={0.5} />
+        <ReferenceLine y={750} stroke="#15803d" strokeDasharray="3 3" strokeOpacity={0.5} />
+        <ReferenceLine y={650} stroke="#16a34a" strokeDasharray="3 3" strokeOpacity={0.5} />
         <ReferenceLine y={550} stroke="#f59e0b" strokeDasharray="3 3" strokeOpacity={0.5} />
         <ReferenceLine y={450} stroke="#f97316" strokeDasharray="3 3" strokeOpacity={0.5} />
         <Tooltip
@@ -54,10 +54,10 @@ export function ScoreHistory({ data }: ScoreHistoryProps) {
         <Line
           type="monotone"
           dataKey="score"
-          stroke="#0d9488"
+          stroke="#16a34a"
           strokeWidth={2.5}
-          dot={{ fill: "#0d9488", r: 4 }}
-          activeDot={{ r: 6, fill: "#0d9488" }}
+          dot={{ fill: "#16a34a", r: 4 }}
+          activeDot={{ r: 6, fill: "#16a34a" }}
         />
       </LineChart>
     </ResponsiveContainer>

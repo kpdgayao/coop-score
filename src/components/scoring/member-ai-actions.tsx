@@ -142,7 +142,7 @@ export function MemberAIActions({
             onClick={generateMemo}
             disabled={generatingMemo}
             variant="outline"
-            className="border-teal text-teal hover:bg-teal/10"
+            className="border-brand text-brand hover:bg-brand/10"
           >
             {generatingMemo ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

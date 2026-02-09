@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case "start": {
-        const { loanId } = body;
+        const { loanId, language } = body;
         if (!loanId) {
           return NextResponse.json(
             { error: "loanId is required" },
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
             );
           }
         }
-        const result = await startInterview(loanId, conductedById);
+        const result = await startInterview(loanId, conductedById, language || "english");
         return NextResponse.json(result);
       }
 

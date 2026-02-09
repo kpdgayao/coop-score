@@ -38,7 +38,7 @@ function getLoanStatusColor(status: string): string {
     case "PENDING":
       return "bg-amber-100 text-amber-800";
     case "APPROVED":
-      return "bg-teal-100 text-teal-800";
+      return "bg-green-100 text-green-800";
     case "DELINQUENT":
       return "bg-orange-100 text-orange-800";
     case "DEFAULT":

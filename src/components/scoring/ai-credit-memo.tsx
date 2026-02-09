@@ -38,7 +38,7 @@ export function AICreditMemo({ recommendations }: CreditMemoProps) {
   const getRecommendationColor = () => {
     switch (r.recommendation) {
       case "approve": return "bg-emerald-100 text-emerald-800";
-      case "approve_with_conditions": return "bg-teal-100 text-teal-800";
+      case "approve_with_conditions": return "bg-green-100 text-green-800";
       case "review": return "bg-amber-100 text-amber-800";
       case "decline": return "bg-red-100 text-red-800";
       default: return "bg-muted text-muted-foreground";
@@ -50,7 +50,7 @@ export function AICreditMemo({ recommendations }: CreditMemoProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Brain className="h-5 w-5 text-teal" />
+            <Brain className="h-5 w-5 text-brand" />
             AI Credit Assessment
           </CardTitle>
           <Badge className={getRecommendationColor()}>
@@ -112,7 +112,7 @@ export function AICreditMemo({ recommendations }: CreditMemoProps) {
         {r.improvement_tips?.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-sm font-medium flex items-center gap-1.5">
-              <Lightbulb className="h-4 w-4 text-teal" />
+              <Lightbulb className="h-4 w-4 text-brand" />
               How to Improve
             </h4>
             <ul className="space-y-1">

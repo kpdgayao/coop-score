@@ -37,8 +37,8 @@ export function DimensionRadar({ dimensions }: DimensionRadarProps) {
         <Radar
           name="Score"
           dataKey="score"
-          stroke="#0d9488"
-          fill="#0d9488"
+          stroke="#16a34a"
+          fill="#16a34a"
           fillOpacity={0.2}
           strokeWidth={2}
         />
