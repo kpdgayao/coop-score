@@ -64,7 +64,10 @@ export function ScoreGauge({
   const dim = dimensions[size];
   const cx = dim.width / 2;
   const cy = dim.height - 18;
-  const r = cx - strokeWidth;
+  // Reserve space for the needle dot (radius = strokeWidth*0.6 + stroke border)
+  // which extends beyond the arc path further than the stroke half-width
+  const dotPadding = Math.ceil(strokeWidth * 0.6) + 1;
+  const r = cx - dotPadding - strokeWidth / 2;
 
   const leftX = cx - r;
   const rightX = cx + r;
@@ -120,7 +123,7 @@ export function ScoreGauge({
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={dim.width} height={dim.height} viewBox={`0 0 ${dim.width} ${dim.height}`} overflow="hidden">
+      <svg width={dim.width} height={dim.height} viewBox={`0 0 ${dim.width} ${dim.height}`}>
         {/* Background colored segments */}
         {segmentArcs.map((seg, i) => (
           <path
