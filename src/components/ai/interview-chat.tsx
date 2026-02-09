@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, CheckCircle, Loader2, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -192,9 +191,9 @@ export function InterviewChat({
         )}
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
         {/* Messages */}
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+        <div className="flex-1 min-h-0 overflow-y-auto p-4" ref={scrollRef}>
           {!started ? (
             <div className="flex flex-col items-center py-6 text-center">
               <MessageCircle className="h-10 w-10 text-muted-foreground/30 mb-3" />
@@ -287,7 +286,7 @@ export function InterviewChat({
               )}
             </div>
           )}
-        </ScrollArea>
+        </div>
 
         {/* Input */}
         {started && !isComplete && (
