@@ -5,14 +5,19 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const isProduction = process.env.NODE_ENV === "production";
+const connectionString = process.env.DATABASE_URL!;
+const needsSsl =
+  connectionString.includes("sslmode=require") ||
+  (!connectionString.includes(".railway.internal") &&
+    !connectionString.includes("localhost") &&
+    process.env.NODE_ENV === "production");
 
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-  ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+  connectionString,
+  ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
 });
 
 export const prisma =
   globalForPrisma.prisma ?? new PrismaClient({ adapter });
 
-if (!isProduction) globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
