@@ -56,14 +56,14 @@ export function ScoreGauge({
   const fontSizes = { sm: 28, md: 38, lg: 48 };
 
   const dimensions = {
-    sm: { width: 140, height: 80 },
-    md: { width: 200, height: 115 },
-    lg: { width: 280, height: 160 },
+    sm: { width: 140, height: 95 },
+    md: { width: 200, height: 130 },
+    lg: { width: 280, height: 180 },
   };
 
   const dim = dimensions[size];
   const cx = dim.width / 2;
-  const cy = dim.height - 5;
+  const cy = dim.height - 18;
   const r = cx - strokeWidth;
 
   const leftX = cx - r;
@@ -120,7 +120,7 @@ export function ScoreGauge({
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={dim.width} height={dim.height} viewBox={`0 0 ${dim.width} ${dim.height}`}>
+      <svg width={dim.width} height={dim.height} viewBox={`0 0 ${dim.width} ${dim.height}`} overflow="hidden">
         {/* Background colored segments */}
         {segmentArcs.map((seg, i) => (
           <path
